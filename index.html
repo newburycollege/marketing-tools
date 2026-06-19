@@ -1,37 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Newbury College Marketing Tools</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Segoe UI, sans-serif;
-      background: #f3f2f1;
-      padding: 40px;
-      text-align: center;
-    }
-    h1 { margin-bottom: 20px; }
-    a {
-      display: block;
-      margin: 15px auto;
-      padding: 15px;
-      width: 300px;
-      background: #f42941;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: bold;
-      transition: background 0.2s;
-    }
-    a:hover {
-      background: #d02036;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Marketing tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/gds-theme.css" />
 </head>
-<body>
-  <h1>Marketing Tools</h1>
-  <a href="qr.html">QR Code Generator</a>
-  <a href="resize.html">Image Resizer</a>
+<body data-app-key="home" data-app-title="Marketing tools" data-app-intro="A suite of digital tools to support Newbury College marketing functions.">
+  <div id="app-shell"></div>
+
+  <template id="app-page-content">
+    <div class="app-note">
+      These tools are here to help Newbury College staff complete common tasks quickly and easily.
+    </div>
+
+    <div class="app-grid app-grid--two">
+      <section class="app-card">
+        <h2 class="app-section-title">Available tools</h2>
+        <p class="app-body-intro">Choose a tool below.</p>
+        <ul class="tool-list">
+          <li>
+            <a class="tool-link" href="qr.html">
+              <span class="tool-link__title">QR Code Generator</span>
+              <span class="tool-link__description">Create a QR code from text or a URL, then download it as a PNG.</span>
+            </a>
+          </li>
+          <li>
+            <a class="tool-link" href="resize.html">
+              <span class="tool-link__title">Image Resizer</span>
+              <span class="tool-link__description">Upload one image and generate the required marketing image sizes in one go.</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="app-card">
+        <h2 class="app-section-title">Need another tool?</h2>
+        <p class="app-body-intro">More useful tools may be added over time to support day-to-day activity.</p>
+        <p>If there is a task that could be made easier with a simple tool, please contact <a href="mailto:marketing@newbury-college.ac.uk">Marketing</a>.</p>
+      </section>
+    </div>
+  </template>
+
+  <script src="js/gds-shell.js"></script>
 </body>
 </html>
