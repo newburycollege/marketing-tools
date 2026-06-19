@@ -45,7 +45,9 @@ a:hover {
 
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid var(--gds-focus);
   outline-offset: 0;
   box-shadow: 0 -2px var(--gds-focus), 0 4px var(--gds-focus-text);
@@ -341,7 +343,9 @@ label,
 }
 
 input[type="text"],
-input[type="file"] {
+input[type="file"],
+.app-select,
+.app-textarea {
   width: 100%;
   max-width: 100%;
   min-height: 44px;
@@ -354,6 +358,11 @@ input[type="file"] {
 
 input[type="file"] {
   padding: 8px;
+}
+
+.app-textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 .error-message {

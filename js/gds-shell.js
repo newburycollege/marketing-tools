@@ -1,8 +1,9 @@
 (function () {
   const navItems = [
     { key: 'home', title: 'Home', href: 'index.html', description: 'Toolkit overview and quick links' },
+    { key: 'resize', title: 'Image Resizer', href: 'resize.html', description: 'Generate all marketing image sizes' },
     { key: 'qr', title: 'QR Code Generator', href: 'qr.html', description: 'Create and download QR codes' },
-    { key: 'resize', title: 'Image Resizer', href: 'resize.html', description: 'Generate all marketing image sizes' }
+    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', description: 'Create tracked campaign links' }
   ];
 
   function escapeHtml(value) {
@@ -72,8 +73,8 @@
         '<div class="app-layout">' +
           '<aside class="app-sidebar" aria-label="Toolkit navigation">' +
             '<div class="app-sidebar__header">' +
-              '<h2 class="app-sidebar__title">Marketing Tools</h2>' +
-              '<p class="app-sidebar__hint"></p>' +
+              '<h2 class="app-sidebar__title">Toolkit</h2>' +
+              '<p class="app-sidebar__hint">Choose a tool to continue.</p>' +
             '</div>' +
             '<nav class="app-nav">' +
               '<ul class="app-nav__list">' +

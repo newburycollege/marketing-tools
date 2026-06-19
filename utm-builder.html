@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTM link builder</title>
+  <link rel="stylesheet" href="css/gds-theme.css" />
+</head>
+<body data-app-key="utm" data-app-title="UTM link builder" data-app-intro="Create clean tracked links for campaigns, emails, social posts, QR codes and other marketing activity.">
+  <div id="app-shell"></div>
+
+  <template id="app-page-content">
+    <section class="app-form" aria-labelledby="utm-form-title">
+      <h2 id="utm-form-title" class="app-section-title">Build a tracked link</h2>
+      <p class="page-description">The required fields are destination URL, source, medium and campaign. Optional values can be added if needed.</p>
+
+      <form id="utmForm" novalidate>
+        <div class="form-group">
+          <label for="baseUrl">Destination URL</label>
+          <p class="hint-text">For example, https://newbury-college.ac.uk/open-day</p>
+          <input type="text" id="baseUrl" autocomplete="off" />
+          <p id="baseUrlError" class="error-message" aria-live="polite"></p>
+        </div>
+
+        <div class="app-grid app-grid--two">
+          <div class="form-group">
+            <label for="source">utm_source</label>
+            <p class="hint-text">For example, facebook, linkedin, mailchimp, prospectus</p>
+            <input type="text" id="source" autocomplete="off" />
+            <p id="sourceError" class="error-message" aria-live="polite"></p>
+          </div>
+          <div class="form-group">
+            <label for="medium">utm_medium</label>
+            <p class="hint-text">For example, social, email, print, qr</p>
+            <input type="text" id="medium" autocomplete="off" />
+            <p id="mediumError" class="error-message" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="campaign">utm_campaign</label>
+          <p class="hint-text">For example, january-open-day-2026</p>
+          <input type="text" id="campaign" autocomplete="off" />
+          <p id="campaignError" class="error-message" aria-live="polite"></p>
+        </div>
+
+        <div class="app-grid app-grid--two">
+          <div class="form-group">
+            <label for="content">utm_content (optional)</label>
+            <p class="hint-text">Use this to distinguish versions such as main-button or flyer-front</p>
+            <input type="text" id="content" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="term">utm_term (optional)</label>
+            <p class="hint-text">More commonly used for paid search keywords</p>
+            <input type="text" id="term" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="app-grid app-grid--two">
+          <div class="form-group">
+            <label for="namingStyle">Text formatting</label>
+            <p class="hint-text">Choose how field values should be cleaned before they are added to the link.</p>
+            <select id="namingStyle" class="app-select">
+              <option value="hyphen-lower" selected>Lowercase with hyphens</option>
+              <option value="underscore-lower">Lowercase with underscores</option>
+              <option value="keep">Keep as entered except trimming spaces</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="removePunctuation">Remove punctuation</label>
+            <p class="hint-text">Recommended for cleaner campaign naming.</p>
+            <select id="removePunctuation" class="app-select">
+              <option value="yes" selected>Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="app-button-row">
+          <button type="submit">Build link</button>
+          <button type="button" class="btn-secondary" id="copyButton" disabled>Copy link</button>
+          <button type="button" class="btn-secondary" id="clearButton">Clear</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="app-card" aria-labelledby="utm-output-title">
+      <h2 id="utm-output-title" class="app-section-title">Tracked link</h2>
+      <p class="page-description">Use the copy button to paste this into emails, social posts, QR codes or other campaign materials.</p>
+
+      <div class="form-group">
+        <label for="utmResult">Final URL</label>
+        <textarea id="utmResult" class="app-textarea" rows="4" readonly></textarea>
+      </div>
+
+      <div class="app-note" id="utmSummary">Complete the form above to generate a tracked link.</div>
+    </section>
+  </template>
+
+  <script src="js/gds-shell.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('utmForm');
+      const copyButton = document.getElementById('copyButton');
+      const clearButton = document.getElementById('clearButton');
+      const resultField = document.getElementById('utmResult');
+      const summary = document.getElementById('utmSummary');
+
+      const requiredFields = [
+        { id: 'baseUrl', errorId: 'baseUrlError', label: 'destination URL' },
+        { id: 'source', errorId: 'sourceError', label: 'utm_source' },
+        { id: 'medium', errorId: 'mediumError', label: 'utm_medium' },
+        { id: 'campaign', errorId: 'campaignError', label: 'utm_campaign' }
+      ];
+
+      function cleanValue(value, style, removePunctuation) {
+        let output = value.trim();
+        if (!output) return '';
+        if (removePunctuation === 'yes') {
+          output = output.replace(/[’'".,:;!?()\[\]{}\/\&]+/g, ' ');
+        }
+        output = output.replace(/\s+/g, ' ').trim();
+        if (style === 'hyphen-lower') {
+          output = output.toLowerCase().replace(/\s+/g, '-');
+        } else if (style === 'underscore-lower') {
+          output = output.toLowerCase().replace(/\s+/g, '_');
+        }
+        return output;
+      }
+
+      function setError(fieldId, errorId, message) {
+        const field = document.getElementById(fieldId);
+        const error = document.getElementById(errorId);
+        field.classList.toggle('error-input', Boolean(message));
+        error.textContent = message || '';
+      }
+
+      function validateUrl(value) {
+        try {
+          const parsed = new URL(value);
+          return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function buildLink() {
+        const namingStyle = document.getElementById('namingStyle').value;
+        const removePunctuation = document.getElementById('removePunctuation').value;
+
+        let valid = true;
+        requiredFields.forEach(function (item) {
+          const rawValue = document.getElementById(item.id).value;
+          if (!rawValue.trim()) {
+            setError(item.id, item.errorId, 'Enter a value for ' + item.label + '.');
+            valid = false;
+          } else {
+            setError(item.id, item.errorId, '');
+          }
+        });
+
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        if (baseUrl && !validateUrl(baseUrl)) {
+          setError('baseUrl', 'baseUrlError', 'Enter a valid URL starting with http:// or https://');
+          valid = false;
+        }
+
+        if (!valid) {
+          resultField.value = '';
+          copyButton.disabled = true;
+          summary.textContent = 'Please correct the highlighted fields and try again.';
+          return;
+        }
+
+        const parsedUrl = new URL(baseUrl);
+        const source = cleanValue(document.getElementById('source').value, namingStyle, removePunctuation);
+        const medium = cleanValue(document.getElementById('medium').value, namingStyle, removePunctuation);
+        const campaign = cleanValue(document.getElementById('campaign').value, namingStyle, removePunctuation);
+        const content = cleanValue(document.getElementById('content').value, namingStyle, removePunctuation);
+        const term = cleanValue(document.getElementById('term').value, namingStyle, removePunctuation);
+
+        parsedUrl.searchParams.set('utm_source', source);
+        parsedUrl.searchParams.set('utm_medium', medium);
+        parsedUrl.searchParams.set('utm_campaign', campaign);
+
+        if (content) {
+          parsedUrl.searchParams.set('utm_content', content);
+        } else {
+          parsedUrl.searchParams.delete('utm_content');
+        }
+
+        if (term) {
+          parsedUrl.searchParams.set('utm_term', term);
+        } else {
+          parsedUrl.searchParams.delete('utm_term');
+        }
+
+        resultField.value = parsedUrl.toString();
+        copyButton.disabled = false;
+
+        const summaryParts = [
+          'Source: ' + source,
+          'Medium: ' + medium,
+          'Campaign: ' + campaign
+        ];
+        if (content) summaryParts.push('Content: ' + content);
+        if (term) summaryParts.push('Term: ' + term);
+        summary.textContent = summaryParts.join(' | ');
+      }
+
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        buildLink();
+      });
+
+      copyButton.addEventListener('click', async function () {
+        if (!resultField.value) return;
+        try {
+          await navigator.clipboard.writeText(resultField.value);
+          summary.textContent = 'Tracked link copied to clipboard.';
+        } catch (error) {
+          resultField.select();
+          document.execCommand('copy');
+          summary.textContent = 'Tracked link copied to clipboard.';
+        }
+      });
+
+      clearButton.addEventListener('click', function () {
+        form.reset();
+        requiredFields.forEach(function (item) {
+          setError(item.id, item.errorId, '');
+        });
+        resultField.value = '';
+        copyButton.disabled = true;
+        summary.textContent = 'Complete the form above to generate a tracked link.';
+      });
+    });
+  </script>
+</body>
+</html>
