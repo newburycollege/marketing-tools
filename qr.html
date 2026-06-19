@@ -62,8 +62,7 @@
     }
 
     function setStatus(message) {
-      const status = document.getElementById("qrStatus");
-      status.textContent = message || "";
+      document.getElementById("qrStatus").textContent = message || "";
     }
 
     function handleSubmit(event) {
@@ -106,16 +105,11 @@
     }
 
     async function downloadQR() {
-      if (!currentQrUrl) {
-        return;
-      }
-
+      if (!currentQrUrl) return;
       setStatus("Preparing download…");
       try {
         const response = await fetch(currentQrUrl, { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error("Failed to fetch QR image");
-        }
+        if (!response.ok) throw new Error("Failed to fetch QR image");
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
         const nameInput = document.getElementById("qrName");

@@ -148,8 +148,8 @@
       function buildLink() {
         const namingStyle = document.getElementById('namingStyle').value;
         const removePunctuation = document.getElementById('removePunctuation').value;
-
         let valid = true;
+
         requiredFields.forEach(function (item) {
           const rawValue = document.getElementById(item.id).value;
           if (!rawValue.trim()) {
@@ -183,27 +183,13 @@
         parsedUrl.searchParams.set('utm_source', source);
         parsedUrl.searchParams.set('utm_medium', medium);
         parsedUrl.searchParams.set('utm_campaign', campaign);
-
-        if (content) {
-          parsedUrl.searchParams.set('utm_content', content);
-        } else {
-          parsedUrl.searchParams.delete('utm_content');
-        }
-
-        if (term) {
-          parsedUrl.searchParams.set('utm_term', term);
-        } else {
-          parsedUrl.searchParams.delete('utm_term');
-        }
+        if (content) parsedUrl.searchParams.set('utm_content', content); else parsedUrl.searchParams.delete('utm_content');
+        if (term) parsedUrl.searchParams.set('utm_term', term); else parsedUrl.searchParams.delete('utm_term');
 
         resultField.value = parsedUrl.toString();
         copyButton.disabled = false;
 
-        const summaryParts = [
-          'Source: ' + source,
-          'Medium: ' + medium,
-          'Campaign: ' + campaign
-        ];
+        const summaryParts = ['Source: ' + source, 'Medium: ' + medium, 'Campaign: ' + campaign];
         if (content) summaryParts.push('Content: ' + content);
         if (term) summaryParts.push('Term: ' + term);
         summary.textContent = summaryParts.join(' | ');
@@ -228,9 +214,7 @@
 
       clearButton.addEventListener('click', function () {
         form.reset();
-        requiredFields.forEach(function (item) {
-          setError(item.id, item.errorId, '');
-        });
+        requiredFields.forEach(function (item) { setError(item.id, item.errorId, ''); });
         resultField.value = '';
         copyButton.disabled = true;
         summary.textContent = 'Complete the form above to generate a tracked link.';

@@ -1,9 +1,10 @@
 (function () {
   const navItems = [
     { key: 'home', title: 'Home', href: 'index.html', description: 'Toolkit overview and quick links' },
-    { key: 'resize', title: 'Image Resizer', href: 'resize.html', description: 'Generate all marketing image sizes' },
     { key: 'qr', title: 'QR Code Generator', href: 'qr.html', description: 'Create and download QR codes' },
-    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', description: 'Create tracked campaign links' }
+    { key: 'resize', title: 'Image Resizer', href: 'resize.html', description: 'Generate all marketing image sizes' },
+    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', description: 'Create tracked campaign links' },
+    { key: 'prompt-builder', title: 'AI Prompt Builder', href: 'prompt-builder.html', description: 'Build structured AI prompts for social content' }
   ];
 
   function escapeHtml(value) {
@@ -77,9 +78,7 @@
               '<p class="app-sidebar__hint">Choose a tool to continue.</p>' +
             '</div>' +
             '<nav class="app-nav">' +
-              '<ul class="app-nav__list">' +
-                buildNavigation(currentKey) +
-              '</ul>' +
+              '<ul class="app-nav__list">' + buildNavigation(currentKey) + '</ul>' +
             '</nav>' +
           '</aside>' +
           '<main class="app-main">' +
@@ -89,9 +88,7 @@
                 '<h1 class="app-page__title">' + escapeHtml(title) + '</h1>' +
                 (intro ? '<p class="app-page__intro">' + escapeHtml(intro) + '</p>' : '') +
               '</header>' +
-              '<div class="app-page__body" id="app-page-body">' +
-                pageContentHtml +
-              '</div>' +
+              '<div class="app-page__body" id="app-page-body">' + pageContentHtml + '</div>' +
             '</section>' +
           '</main>' +
         '</div>' +
