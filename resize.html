@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+/>
+  <title>Image Upload and Resize</title>
+  <!-- JSZip (for bundling images as a zip) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- FileSaver.js (to save the zip file locally) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f3f2f1;
+    }
+    form {
+      background: #ffffff;
+      padding: 20px;
+      border: 1px solid #dcdcdc;
+      border-radius: 5px;
+      max-width: 400px;
+      margin: auto;
+    }
+    input[type="file"],
+    input[type="text"],
+    button {
+      display: block;
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #dcdcdc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #f42941;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #000000;
+    }
+    #resultsContainer {
+      max-width: 1000px;
+      margin: 40px auto;
+      overflow-x: auto; /* in case table is wide */
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    table thead th {
+      background-color: #f3f2f1;
+      text-align: left;
+      padding: 10px;
+      border-bottom: 1px solid #dcdcdc;
+    }
+    table tbody td {
+      padding: 10px;
+      border-bottom: 1px solid #dcdcdc;
+      vertical-align: middle;
+    }
+    .downloadLink {
+      display: inline-block;
+      padding: 8px 12px;
+      background-color: #f42941;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .downloadLink:hover {
+      background-color: #000000;
+    }
+    #zipButton {
+      display: none;
+      margin: 20px auto;
+      padding: 10px 15px;
+      text-align: center;
+      background-color: #f42941;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      cursor: pointer;
+      border: none;
+    }
+    #zipButton:hover {
+      background-color: #000000;
+    }
+  </style>
+</head>
+<body>
+  <form id="uploadForm">
+    <h1>Marketing Image Resizer</h1>
+    <p>Select an image to resize all versions:</p>
+    <input type="file" id="imageInput" accept="image/*" required />
+    <input type="text" id="fileName" placeholder="File Name" required />
+    <button type="submit">Upload & Resize All</button>
+    <p>
+      Created by
+      <a href="mailto:s-daubney@newbury-college.ac.uk">Shaun Daubney</a>
+    </p>
+  </form>
+
+  <div id="resultsContainer">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Description</th>
+          <th>File Name</th>
+          <th>File Size</th>
+          <th>Download</th>
+        </tr>
+      </thead>
+      <tbody id="resultsTbody">
+        <!-- Rows added dynamically -->
+      </tbody>
+    </table>
+  </div>
+
+  <button id="zipButton">Download All as ZIP</button>
+
+  <script>
+    // Define your desired sizes, including the 'press' size.
+    const SIZES = [
+      {
+        shortName: "email_cover",
+        displayName: "Email Cover (800px x 400px)",
+        width: 800,
+        height: 400,
+        aspectRatio: 2 / 1,
+      },
+      {
+        shortName: "email_220",
+        displayName: "Email 220 (220px x 165px)",
+        width: 220,
+        height: 165,
+        aspectRatio: 4 / 3,
+      },
+      {
+        shortName: "email_240",
+        displayName: "Email 240 (240px x 180px)",
+        width: 240,
+        height: 180,
+        aspectRatio: 4 / 3,
+      },
+      {
+        shortName: "email_330",
+        displayName: "Email 330 (330px x 248px)",
+        width: 330,
+        height: 248,
+        aspectRatio: 4 / 3,
+      },
+      {
+        shortName: "website",
+        displayName: "Website News (800px x 600px)",
+        width: 800,
+        height: 600,
+        aspectRatio: 4 / 3,
+      },
+      {
+        shortName: "website_contact_profile",
+        displayName: "Website Contact Profile (300px x 265px)",
+        width: 300,
+        height: 265,
+        aspectRatio: 1.13,
+      },
+      {
+        shortName: "website_case_study",
+        displayName: "Website Case Study (512px x 512px)",
+        width: 512,
+        height: 512,
+        aspectRatio: 1,
+      },
+      {
+        shortName: "press",
+        displayName: "Press (Max 4000px wide)",
+        maxWidth: 4000,
+      },
+    ];
+
+    // Adjust as needed. Higher => less compression => bigger file.
+    const JPEG_QUALITY = 0.9;
+
+    /**
+     * Resize the image to a fixed bounding box (width x height), preserving aspect ratio.
+     */
+    function resizeImageBoundingBox(img, width, height, aspectRatio, jpegQuality) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = width;
+      canvas.height = height;
+
+      const imgAspect = img.width / img.height;
+      let drawWidth, drawHeight;
+      if (imgAspect > aspectRatio) {
+        drawHeight = height;
+        drawWidth = height * imgAspect;
+      } else {
+        drawWidth = width;
+        drawHeight = width / imgAspect;
+      }
+
+      ctx.drawImage(
+        img,
+        (width - drawWidth) / 2,
+        (height - drawHeight) / 2,
+        drawWidth,
+        drawHeight
+      );
+      ctx.imageSmoothingQuality = "high";
+
+      return canvas.toDataURL("image/jpeg", jpegQuality);
+    }
+
+    /**
+     * Resize the image so width does not exceed maxWidth, preserving aspect ratio.
+     * If image is already <= maxWidth, returns the original size at the given quality.
+     */
+    function resizeImageMaxWidth(img, maxWidth, jpegQuality) {
+      if (img.width <= maxWidth) {
+        // Return original size but re-encode at chosen quality
+        return convertImageToDataURL(img, jpegQuality);
+      }
+      const scaleFactor = maxWidth / img.width;
+      const newWidth = maxWidth;
+      const newHeight = Math.round(img.height * scaleFactor);
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+      return canvas.toDataURL("image/jpeg", jpegQuality);
+    }
+
+    /**
+     * Convert an <img> to a JPEG dataURL at a given quality.
+     */
+    function convertImageToDataURL(img, jpegQuality) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      ctx.imageSmoothingQuality = "high";
+      return canvas.toDataURL("image/jpeg", jpegQuality);
+    }
+
+    /**
+     * Format bytes (number) into a KB string with 2 decimal places.
+     */
+    function formatBytesToKB(bytes) {
+      return (bytes / 1024).toFixed(2) + " KB";
+    }
+
+    document
+      .getElementById("uploadForm")
+      .addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const file = document.getElementById("imageInput").files[0];
+        const fileName = document
+          .getElementById("fileName")
+          .value.trim()
+          .replace(/\s+/g, "_");
+
+        if (!file || !fileName) {
+          alert("Please select an image and enter a File Name.");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          // Clear previous results
+          const tbody = document.getElementById("resultsTbody");
+          tbody.innerHTML = "";
+          document.getElementById("zipButton").style.display = "none";
+
+          const img = new Image();
+          img.src = e.target.result;
+
+          img.onload = async function () {
+            const zip = new JSZip();
+            let anyImagesCreated = false;
+
+            for (let sizeInfo of SIZES) {
+              try {
+                let resizedDataUrl = "";
+
+                if (sizeInfo.shortName === "press" && sizeInfo.maxWidth) {
+                  // Press logic: max 4000px wide
+                  resizedDataUrl = resizeImageMaxWidth(
+                    img,
+                    sizeInfo.maxWidth,
+                    JPEG_QUALITY
+                  );
+                } else {
+                  // Standard bounding box logic
+                  resizedDataUrl = resizeImageBoundingBox(
+                    img,
+                    sizeInfo.width,
+                    sizeInfo.height,
+                    sizeInfo.aspectRatio || 1,
+                    JPEG_QUALITY
+                  );
+                }
+
+                // Convert dataURL to blob so we can find its size and add to ZIP
+                const res = await fetch(resizedDataUrl);
+                const blob = await res.blob();
+                const arrayBuffer = await blob.arrayBuffer();
+
+                // File details
+                const finalFileName = `${fileName}_${sizeInfo.shortName}.jpg`;
+                const fileSizeStr = formatBytesToKB(blob.size);
+
+                // Create table row
+                const tr = document.createElement("tr");
+
+                // 1) Image cell (150px wide)
+                const tdImage = document.createElement("td");
+                tdImage.innerHTML = `<img src="${resizedDataUrl}" style="width:150px; height:auto;" />`;
+                tr.appendChild(tdImage);
+
+                // 2) Description cell
+                const tdDescription = document.createElement("td");
+                tdDescription.textContent = sizeInfo.displayName;
+                tr.appendChild(tdDescription);
+
+                // 3) File name cell
+                const tdFileName = document.createElement("td");
+                tdFileName.textContent = finalFileName;
+                tr.appendChild(tdFileName);
+
+                // 4) File size cell
+                const tdFileSize = document.createElement("td");
+                tdFileSize.textContent = fileSizeStr;
+                tr.appendChild(tdFileSize);
+
+                // 5) Download cell
+                const tdDownload = document.createElement("td");
+                tdDownload.innerHTML = `
+                  <a 
+                    class="downloadLink"
+                    href="${resizedDataUrl}"
+                    download="${finalFileName}"
+                  >
+                    Download
+                  </a>
+                `;
+                tr.appendChild(tdDownload);
+
+                tbody.appendChild(tr);
+
+                // Add file to ZIP
+                zip.file(finalFileName, arrayBuffer);
+
+                anyImagesCreated = true;
+              } catch (error) {
+                console.error(
+                  `Failed processing ${sizeInfo.shortName}:`,
+                  error
+                );
+              }
+            }
+
+            // If we successfully created images, show the ZIP button
+            if (anyImagesCreated) {
+              document.getElementById("zipButton").style.display = "inline-block";
+              // Handle ZIP creation
+              document.getElementById("zipButton").onclick = async function () {
+                const content = await zip.generateAsync({ type: "blob" });
+                saveAs(content, `${fileName}_resized_images.zip`);
+              };
+            }
+          };
+        };
+        reader.readAsDataURL(file);
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>QR Code Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Base typography and layout – inspired by GOV.UK styles */
+    :root {
+      color-scheme: light;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f3f2f1;
+      color: #0b0c0c;
+      line-height: 1.5;
+      font-size: 16px;
+    }
+
+    main {
+      max-width: 640px;
+      margin: 24px auto;
+      padding: 0 16px 32px;
+    }
+
+    .panel {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 24px 20px 28px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      border: 1px solid #d0d0d0;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
+    .page-description {
+      margin: 0 0 16px;
+      font-size: 15px;
+      color: #505a5f;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .hint-text {
+      font-size: 14px;
+      color: #6f777b;
+      margin-bottom: 4px;
+    }
+
+    .error-message {
+      font-size: 14px;
+      color: #d4351c; /* GOV.UK error red */
+      margin-top: 4px;
+    }
+
+    .error-input {
+      border-color: #d4351c !important;
+      box-shadow: 0 0 0 2px rgba(212, 53, 28, 0.2);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 4px;
+      border: 1px solid #b1b4b6;
+      font-size: 16px;
+    }
+
+    input[type="text"]:focus-visible {
+      outline: 3px solid #0b0c0c;
+      outline-offset: 0;
+      border-color: #0b0c0c;
+    }
+
+    /* Button styles */
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      border-radius: 4px;
+      border: 1px solid transparent;
+      padding: 10px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background-color: #f42941; /* requested accent */
+      border-color: #f42941;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: #d02036;
+      border-color: #d02036;
+    }
+
+    .btn-secondary {
+      background-color: #ffffff;
+      border-color: #b1b4b6;
+      color: #0b0c0c;
+    }
+
+    .btn-secondary:hover {
+      background-color: #f3f2f1;
+      border-color: #505a5f;
+    }
+
+    button:focus-visible {
+      outline: 3px solid #0b0c0c;
+      outline-offset: 2px;
+    }
+
+    button:disabled,
+    button[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* QR preview area */
+    .qr-wrapper {
+      border-radius: 6px;
+      border: 1px dashed #b1b4b6;
+      background-color: #fafafa;
+      padding: 16px;
+      text-align: center;
+    }
+
+    #qrImage {
+      display: none;
+      margin-bottom: 8px;
+      width: 256px;
+      height: 256px;
+      object-fit: contain;
+      background: #ffffff;       /* visual margin background */
+      padding: 8px;              /* slight visual padding around QR */
+      border-radius: 4px;
+    }
+
+    .qr-placeholder {
+      font-size: 14px;
+      color: #6f777b;
+    }
+
+    .status-text {
+      font-size: 14px;
+      color: #0b0c0c;
+      margin-top: 6px;
+    }
+
+    @media (min-width: 768px) {
+      .panel {
+        padding: 28px 24px 32px;
+      }
+
+      #qrImage {
+        width: 320px;
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="panel" role="region" aria-labelledby="qr-title">
+
+      <h1 id="qr-title">Newbury College QR code generator</h1>
+      <p class="page-description">
+        Enter text or a URL to generate a QR code that you can scan or download.
+      </p>
+
+      <form onsubmit="handleSubmit(event)" novalidate>
+        <div class="form-group">
+          <label for="qrName">Name for this QR code</label>
+          <p class="hint-text" id="qrNameHint">
+            This will be used as the downloaded filename.
+          </p>
+          <input
+            type="text"
+            id="qrName"
+            aria-describedby="qrNameHint"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="qrText">Text or URL</label>
+          <p class="hint-text" id="qrHint">
+            For example, <code>https://newbury-college.ac.uk</code> or any short piece of text.
+          </p>
+          <input
+            type="text"
+            id="qrText"
+            aria-describedby="qrHint qrError"
+            autocomplete="off"
+          />
+          <p id="qrError" class="error-message" aria-live="polite"></p>
+        </div>
+
+        <div class="button-row">
+          <button
+            type="submit"
+            class="btn-primary"
+            id="generateBtn"
+          >
+            Generate QR code
+          </button>
+          <button
+            type="button"
+            class="btn-secondary"
+            id="downloadBtn"
+            onclick="downloadQR()"
+            disabled
+          >
+            Download QR code
+          </button>
+        </div>
+      </form>
+
+      <div
+        class="qr-wrapper"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <img id="qrImage" alt="Generated QR code" />
+        <p id="qrPlaceholder" class="qr-placeholder">
+          The QR code preview will appear here after you generate it.
+        </p>
+        <p id="qrStatus" class="status-text"></p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = "https://api.qrserver.com/v1/create-qr-code/";
+    const FIXED_SIZE = "512x512";
+    const QR_MARGIN = 16; // slight margin in pixels inside the generated QR image
+
+    let currentQrUrl = "";
+
+    function setError(message) {
+      const input = document.getElementById("qrText");
+      const error = document.getElementById("qrError");
+
+      if (message) {
+        error.textContent = message;
+        input.classList.add("error-input");
+      } else {
+        error.textContent = "";
+        input.classList.remove("error-input");
+      }
+    }
+
+    function setStatus(message) {
+      const status = document.getElementById("qrStatus");
+      status.textContent = message || "";
+    }
+
+    function handleSubmit(event) {
+      event.preventDefault();
+      generateQR();
+    }
+
+    function generateQR() {
+      const textInput = document.getElementById("qrText");
+      const img = document.getElementById("qrImage");
+      const placeholder = document.getElementById("qrPlaceholder");
+      const downloadBtn = document.getElementById("downloadBtn");
+
+      const value = textInput.value.trim();
+
+      if (!value) {
+        setError("Enter some text or a URL to generate a QR code.");
+        setStatus("");
+        img.style.display = "none";
+        placeholder.style.display = "block";
+        downloadBtn.disabled = true;
+        currentQrUrl = "";
+        return;
+      }
+
+      setError(""); // clear any previous error
+
+      const encoded = encodeURIComponent(value);
+      const url =
+        API_BASE +
+        "?size=" +
+        FIXED_SIZE +
+        "&margin=" +
+        QR_MARGIN +
+        "&data=" +
+        encoded +
+        "&t=" +
+        Date.now(); // cache-busting
+
+      currentQrUrl = url;
+
+      img.src = url;
+      img.style.display = "block";
+      placeholder.style.display = "none";
+      downloadBtn.disabled = false;
+
+      setStatus("QR code generated. You can scan it on screen or download it as an image.");
+    }
+
+    function getSafeFileName(rawName) {
+      if (!rawName) return "qr-code";
+      const cleaned = rawName
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")         // spaces -> hyphens
+        .replace(/[^a-z0-9-_]/g, ""); // remove anything weird
+
+      return cleaned || "qr-code";
+    }
+
+    async function downloadQR() {
+      if (!currentQrUrl) {
+        return;
+      }
+
+      setStatus("Preparing download…");
+
+      try {
+        const response = await fetch(currentQrUrl, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Failed to fetch QR image");
+        }
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const nameInput = document.getElementById("qrName");
+        const baseName = getSafeFileName(nameInput ? nameInput.value : "");
+        const fileName = baseName + "-qr-code.png";
+
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName; // e.g. "open-day-qr-code.png"
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(blobUrl);
+        setStatus("Download started. If it has not appeared, check your browser’s downloads.");
+      } catch (e) {
+        console.error(e);
+        setStatus("Could not download the QR code. Please try again.");
+      }
+    }
+  </script>
+</body>
+</html>
