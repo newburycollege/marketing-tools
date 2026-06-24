@@ -2,12 +2,6 @@
 
 A small static HTML toolkit for internal marketing apps, built with a shared GDS-style shell and shared styling so every app looks and behaves consistently.
 
-This repository currently includes:
-
-- **Home** (`index.html`)
-- **QR Code Generator** (`qr.html`)
-- **Image Resizer** (`resize.html`)
-
 The suite is designed so you can add new tools without rebuilding the header, navigation or overall page layout each time.
 
 ---
