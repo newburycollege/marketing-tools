@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apprenticeship vacancy builder</title>
+  <link rel="stylesheet" href="css/gds-theme.css" />
+  <style>
+    .vacancy-builder-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 520px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+    .vacancy-builder-preview-wrap {
+      background: #ffffff;
+      border: 1px solid var(--gds-border-light);
+      box-shadow: var(--gds-shadow);
+      padding: 16px;
+    }
+    #vacancyPreviewCanvas {
+      display: block;
+      width: 100%;
+      max-width: 540px;
+      aspect-ratio: 1 / 1;
+      background: #e6e6e6;
+      margin: 0 auto;
+      border: 1px solid var(--gds-border-light);
+    }
+    .vacancy-slider-value {
+      color: var(--gds-secondary-text);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+    .vacancy-builder-output-grid {
+      display: grid;
+      gap: 16px;
+    }
+    .vacancy-builder-output-card {
+      border: 1px solid var(--gds-border-light);
+      background: #ffffff;
+      padding: 16px;
+    }
+    .vacancy-builder-headline-preview {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 0 16px;
+      color: var(--gds-text);
+    }
+    @media (max-width: 980px) {
+      .vacancy-builder-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-app-key="vacancy-builder" data-app-title="Apprenticeship vacancy builder" data-app-intro="Create a 1080 × 1080 vacancy image using the standard overlay and generate standardised social copy.">
+  <div id="app-shell"></div>
+
+  <template id="app-page-content">
+    <div class="app-note">
+      The overlay is loaded automatically from <code>img/apprenticeship-vacancy-overlay.png</code>. This version keeps the crop simple with zoom and position controls so it is easy to maintain.
+    </div>
+
+    <div class="vacancy-builder-layout">
+      <section class="app-form" aria-labelledby="vacancy-image-title">
+        <h2 id="vacancy-image-title" class="app-section-title">Image setup</h2>
+
+        <div class="form-group">
+          <label for="backgroundImage">Background image</label>
+          <p class="hint-text">Upload a stock image or other background image. It will be cropped to a square automatically.</p>
+          <input type="file" id="backgroundImage" accept="image/*" />
+        </div>
+
+        <div class="app-grid app-grid--two">
+          <div class="form-group">
+            <label for="zoomRange">Zoom</label>
+            <input type="range" id="zoomRange" min="1" max="3" step="0.01" value="1" />
+            <div class="vacancy-slider-value" id="zoomValue">1.00×</div>
+          </div>
+          <div class="form-group">
+            <label for="outputSize">Output size</label>
+            <input type="text" id="outputSize" value="1080 × 1080" readonly />
+          </div>
+        </div>
+
+        <div class="app-grid app-grid--two">
+          <div class="form-group">
+            <label for="xRange">Horizontal position</label>
+            <input type="range" id="xRange" min="-100" max="100" step="1" value="0" />
+            <div class="vacancy-slider-value" id="xValue">0</div>
+          </div>
+          <div class="form-group">
+            <label for="yRange">Vertical position</label>
+            <input type="range" id="yRange" min="-100" max="100" step="1" value="0" />
+            <div class="vacancy-slider-value" id="yValue">0</div>
+          </div>
+        </div>
+
+        <div class="app-button-row">
+          <button type="button" id="downloadImageButton" disabled>Download 1080 × 1080 image</button>
+          <button type="button" class="btn-secondary" id="resetCropButton">Reset crop</button>
+        </div>
+        <p class="status-text" id="imageStatus">Upload a background image to begin. The overlay will be loaded automatically from the img folder.</p>
+      </section>
+
+      <section class="app-card">
+        <h2 class="app-section-title">Preview</h2>
+        <div class="vacancy-builder-preview-wrap">
+          <canvas id="vacancyPreviewCanvas" width="1080" height="1080"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <section class="app-form" aria-labelledby="vacancy-copy-title" style="margin-top:24px;">
+      <h2 id="vacancy-copy-title" class="app-section-title">Vacancy post content</h2>
+      <p class="vacancy-builder-headline-preview" id="headlinePreview">Generated headline: Apprenticeship Vacancy</p>
+
+      <div class="app-grid app-grid--two">
+        <div class="form-group">
+          <label for="apprenticeshipName">Apprenticeship title</label>
+          <p class="hint-text">Enter the apprenticeship name without the word “Vacancy”, for example Level 2 Business Apprenticeship.</p>
+          <input type="text" id="apprenticeshipName" placeholder="For example, Level 2 Business Apprenticeship" />
+          <p class="error-message" id="apprenticeshipNameError"></p>
+        </div>
+        <div class="form-group">
+          <label for="employerName">Employer</label>
+          <input type="text" id="employerName" placeholder="For example, Vodafone" />
+          <p class="error-message" id="employerNameError"></p>
+        </div>
+      </div>
+
+      <div class="app-grid app-grid--two">
+        <div class="form-group">
+          <label for="locationText">Location</label>
+          <input type="text" id="locationText" placeholder="For example, Newbury" />
+        </div>
+        <div class="form-group">
+          <label for="closingDate">Closing date</label>
+          <input type="text" id="closingDate" placeholder="For example, 30 June 2026" />
+        </div>
+      </div>
+
+      <div class="app-grid app-grid--two">
+        <div class="form-group">
+          <label for="salaryText">Salary or pay</label>
+          <input type="text" id="salaryText" placeholder="For example, £14,000 per year" />
+        </div>
+        <div class="form-group">
+          <label for="ctaText">Call to action</label>
+          <input type="text" id="ctaText" value="Apply now" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="shortBenefit">Short selling point</label>
+        <p class="hint-text">Keep this to one plain-English sentence. For example, Gain hands-on experience while earning and working towards a recognised qualification.</p>
+        <textarea id="shortBenefit" class="app-textarea"></textarea>
+        <p class="error-message" id="shortBenefitError"></p>
+      </div>
+
+      <div class="form-group">
+        <label for="applyLink">Post link</label>
+        <p class="hint-text">Use your bit.ly or final vacancy link here.</p>
+        <input type="url" id="applyLink" placeholder="https://..." />
+        <p class="error-message" id="applyLinkError"></p>
+      </div>
+
+      <div class="app-button-row">
+        <button type="button" id="generatePostsButton">Generate copy</button>
+        <button type="button" class="btn-secondary" id="clearPostsButton">Clear fields</button>
+      </div>
+      <p class="status-text" id="copyStatus">Complete the fields above to generate standard vacancy copy.</p>
+    </section>
+
+    <section class="app-card" style="margin-top:24px;">
+      <h2 class="app-section-title">Standardised outputs</h2>
+      <div class="vacancy-builder-output-grid">
+        <div class="vacancy-builder-output-card">
+          <h3>Facebook</h3>
+          <textarea id="facebookOutput" class="app-textarea" readonly></textarea>
+          <div class="app-button-row"><button type="button" class="btn-secondary" data-copy-target="facebookOutput">Copy Facebook copy</button></div>
+        </div>
+        <div class="vacancy-builder-output-card">
+          <h3>Instagram</h3>
+          <textarea id="instagramOutput" class="app-textarea" readonly></textarea>
+          <div class="app-button-row"><button type="button" class="btn-secondary" data-copy-target="instagramOutput">Copy Instagram copy</button></div>
+        </div>
+        <div class="vacancy-builder-output-card">
+          <h3>LinkedIn</h3>
+          <textarea id="linkedinOutput" class="app-textarea" readonly></textarea>
+          <div class="app-button-row"><button type="button" class="btn-secondary" data-copy-target="linkedinOutput">Copy LinkedIn copy</button></div>
+        </div>
+      </div>
+    </section>
+  </template>
+
+  <script src="js/gds-shell.js"></script>
+  <script>
+    (function () {
+      const OUTPUT_SIZE = 1080;
+      const OVERLAY_PATH = 'img/apprenticeship-vacancy-overlay.png';
+
+      function boot() {
+        const canvas = document.getElementById('vacancyPreviewCanvas');
+        const backgroundInput = document.getElementById('backgroundImage');
+        if (!canvas || !backgroundInput) {
+          window.requestAnimationFrame(boot);
+          return;
+        }
+
+        if (canvas.dataset.initialised === 'true') {
+          return;
+        }
+        canvas.dataset.initialised = 'true';
+
+        const previewCtx = canvas.getContext('2d');
+        const zoomRange = document.getElementById('zoomRange');
+        const xRange = document.getElementById('xRange');
+        const yRange = document.getElementById('yRange');
+        const zoomValue = document.getElementById('zoomValue');
+        const xValue = document.getElementById('xValue');
+        const yValue = document.getElementById('yValue');
+        const imageStatus = document.getElementById('imageStatus');
+        const downloadImageButton = document.getElementById('downloadImageButton');
+        const resetCropButton = document.getElementById('resetCropButton');
+        const headlinePreview = document.getElementById('headlinePreview');
+
+        let backgroundImage = null;
+        let overlayImage = null;
+        let overlayReady = false;
+
+        function updateSliderLabels() {
+          zoomValue.textContent = Number(zoomRange.value).toFixed(2) + '×';
+          xValue.textContent = xRange.value;
+          yValue.textContent = yRange.value;
+        }
+
+        function updateHeadlinePreview() {
+          const value = document.getElementById('apprenticeshipName').value.trim();
+          const headline = value ? value + ' Vacancy' : 'Apprenticeship Vacancy';
+          headlinePreview.textContent = 'Generated headline: ' + headline;
+        }
+
+        function drawPreview() {
+          previewCtx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+          previewCtx.fillStyle = '#e6e6e6';
+          previewCtx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+
+          if (!backgroundImage) {
+            downloadImageButton.disabled = true;
+            imageStatus.textContent = overlayReady
+              ? 'Upload a background image to begin.'
+              : 'Upload a background image to begin. Overlay file not yet available.';
+            return;
+          }
+
+          const zoom = Number(zoomRange.value);
+          const xOffset = Number(xRange.value) / 100;
+          const yOffset = Number(yRange.value) / 100;
+
+          const coverScale = Math.max(OUTPUT_SIZE / backgroundImage.width, OUTPUT_SIZE / backgroundImage.height);
+          const scale = coverScale * zoom;
+          const drawWidth = backgroundImage.width * scale;
+          const drawHeight = backgroundImage.height * scale;
+          const maxOffset = OUTPUT_SIZE * 0.5;
+          const drawX = ((OUTPUT_SIZE - drawWidth) / 2) + (xOffset * maxOffset);
+          const drawY = ((OUTPUT_SIZE - drawHeight) / 2) + (yOffset * maxOffset);
+
+          previewCtx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+
+          if (overlayReady && overlayImage) {
+            previewCtx.drawImage(overlayImage, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+            imageStatus.textContent = 'Preview updated with vacancy overlay.';
+          } else {
+            imageStatus.textContent = 'Preview updated, but the overlay file was not found at ' + OVERLAY_PATH + '.';
+          }
+
+          downloadImageButton.disabled = false;
+        }
+
+        function loadImageFromFile(file, callback) {
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const img = new Image();
+            img.onload = function () { callback(img); };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+
+        function loadOverlay() {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = function () {
+            overlayImage = img;
+            overlayReady = true;
+            drawPreview();
+          };
+          img.onerror = function () {
+            overlayImage = null;
+            overlayReady = false;
+            drawPreview();
+          };
+          img.src = OVERLAY_PATH + '?t=' + Date.now();
+        }
+
+        function buildExportCanvas() {
+          // Draw onto a fresh offscreen canvas using only in-memory images
+          // (background loaded via FileReader data URL, overlay loaded with crossOrigin)
+          // This avoids canvas taint issues that would block toBlob / toDataURL.
+          const offscreen = document.createElement('canvas');
+          offscreen.width = OUTPUT_SIZE;
+          offscreen.height = OUTPUT_SIZE;
+          const ctx = offscreen.getContext('2d');
+
+          ctx.fillStyle = '#e6e6e6';
+          ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+
+          if (backgroundImage) {
+            const zoom = Number(zoomRange.value);
+            const xOffset = Number(xRange.value) / 100;
+            const yOffset = Number(yRange.value) / 100;
+            const coverScale = Math.max(OUTPUT_SIZE / backgroundImage.width, OUTPUT_SIZE / backgroundImage.height);
+            const scale = coverScale * zoom;
+            const drawWidth = backgroundImage.width * scale;
+            const drawHeight = backgroundImage.height * scale;
+            const maxOffset = OUTPUT_SIZE * 0.5;
+            const drawX = ((OUTPUT_SIZE - drawWidth) / 2) + (xOffset * maxOffset);
+            const drawY = ((OUTPUT_SIZE - drawHeight) / 2) + (yOffset * maxOffset);
+            ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+          }
+
+          if (overlayReady && overlayImage) {
+            ctx.drawImage(overlayImage, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+          }
+
+          return offscreen;
+        }
+
+        async function downloadCanvasAsPng() {
+          if (!backgroundImage) {
+            imageStatus.textContent = 'No image available to download.';
+            return;
+          }
+
+          const titleValue = document.getElementById('apprenticeshipName').value.trim();
+          const safeName = (titleValue || 'apprenticeship-vacancy')
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+          const fileName = safeName + '-1080x1080.png';
+
+          try {
+            const exportCanvas = buildExportCanvas();
+
+            const triggerDownload = function (url, isObjectUrl) {
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              if (isObjectUrl) {
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+              }
+              imageStatus.textContent = '1080 × 1080 image download started.';
+            };
+
+            if (exportCanvas.toBlob) {
+              exportCanvas.toBlob(function (blob) {
+                if (!blob) {
+                  imageStatus.textContent = 'Download failed. Please try again.';
+                  return;
+                }
+                if (window.navigator.msSaveOrOpenBlob) {
+                  window.navigator.msSaveOrOpenBlob(blob, fileName);
+                  imageStatus.textContent = '1080 × 1080 image download started.';
+                  return;
+                }
+                triggerDownload(URL.createObjectURL(blob), true);
+              }, 'image/png');
+            } else {
+              triggerDownload(exportCanvas.toDataURL('image/png'), false);
+            }
+          } catch (error) {
+            console.error(error);
+            imageStatus.textContent = 'Download failed: ' + error.message;
+          }
+        }
+
+        backgroundInput.addEventListener('change', function () {
+          loadImageFromFile(backgroundInput.files[0], function (img) {
+            backgroundImage = img;
+            drawPreview();
+          });
+        });
+
+        [zoomRange, xRange, yRange].forEach(function (control) {
+          control.addEventListener('input', function () {
+            updateSliderLabels();
+            drawPreview();
+          });
+        });
+
+        resetCropButton.addEventListener('click', function () {
+          zoomRange.value = '1';
+          xRange.value = '0';
+          yRange.value = '0';
+          updateSliderLabels();
+          drawPreview();
+        });
+
+        downloadImageButton.addEventListener('click', downloadCanvasAsPng);
+
+        function setError(id, message) {
+          document.getElementById(id).textContent = message || '';
+        }
+
+        function validateUrl(value) {
+          try {
+            const url = new URL(value);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+          } catch (error) {
+            return false;
+          }
+        }
+
+        function buildDetailLine(locationText, salaryText, closingDate) {
+          const parts = [];
+          if (locationText) parts.push('Location: ' + locationText + '.');
+          if (salaryText) parts.push('Pay: ' + salaryText + '.');
+          if (closingDate) parts.push('Closing date: ' + closingDate + '.');
+          return parts.join(' ');
+        }
+
+        function generateHeadline(apprenticeshipName) {
+          return apprenticeshipName ? apprenticeshipName + ' Vacancy' : 'Apprenticeship Vacancy';
+        }
+
+        function generateCopy() {
+          const apprenticeshipName = document.getElementById('apprenticeshipName').value.trim();
+          const employerName = document.getElementById('employerName').value.trim();
+          const locationText = document.getElementById('locationText').value.trim();
+          const closingDate = document.getElementById('closingDate').value.trim();
+          const salaryText = document.getElementById('salaryText').value.trim();
+          const shortBenefit = document.getElementById('shortBenefit').value.trim();
+          const ctaText = document.getElementById('ctaText').value.trim() || 'Apply now';
+          const applyLink = document.getElementById('applyLink').value.trim();
+          const headline = generateHeadline(apprenticeshipName);
+          const detailLine = buildDetailLine(locationText, salaryText, closingDate);
+          const hashtags = '#NewburyCollege #CareersNotCourses #Apprenticeships';
+
+          let valid = true;
+          if (!apprenticeshipName) {
+            setError('apprenticeshipNameError', 'Enter the apprenticeship title.');
+            valid = false;
+          } else {
+            setError('apprenticeshipNameError', '');
+          }
+          if (!employerName) {
+            setError('employerNameError', 'Enter an employer.');
+            valid = false;
+          } else {
+            setError('employerNameError', '');
+          }
+          if (!shortBenefit) {
+            setError('shortBenefitError', 'Enter a short selling point.');
+            valid = false;
+          } else {
+            setError('shortBenefitError', '');
+          }
+          if (!applyLink) {
+            setError('applyLinkError', 'Enter a link.');
+            valid = false;
+          } else if (!validateUrl(applyLink)) {
+            setError('applyLinkError', 'Enter a valid link starting with http:// or https://');
+            valid = false;
+          } else {
+            setError('applyLinkError', '');
+          }
+
+          if (!valid) {
+            document.getElementById('copyStatus').textContent = 'Please complete the highlighted fields and try again.';
+            return;
+          }
+
+          const facebook = [
+            headline + ' with ' + employerName + '.',
+            shortBenefit,
+            detailLine,
+            ctaText + ': ' + applyLink,
+            hashtags
+          ].filter(Boolean).join('\n\n');
+
+          const instagram = [
+            headline + '.',
+            'Employer: ' + employerName + '.',
+            shortBenefit,
+            detailLine,
+            ctaText + ': ' + applyLink,
+            hashtags
+          ].filter(Boolean).join('\n\n');
+
+          const linkedin = [
+            headline + ' with ' + employerName + '.',
+            shortBenefit,
+            detailLine,
+            'Find out more and ' + ctaText.toLowerCase() + ': ' + applyLink,
+            hashtags
+          ].filter(Boolean).join('\n\n');
+
+          document.getElementById('facebookOutput').value = facebook;
+          document.getElementById('instagramOutput').value = instagram;
+          document.getElementById('linkedinOutput').value = linkedin;
+          document.getElementById('copyStatus').textContent = 'Vacancy copy generated.';
+        }
+
+        document.getElementById('generatePostsButton').addEventListener('click', generateCopy);
+
+        document.getElementById('clearPostsButton').addEventListener('click', function () {
+          ['apprenticeshipName','employerName','locationText','closingDate','salaryText','shortBenefit','applyLink'].forEach(function (id) {
+            document.getElementById(id).value = '';
+          });
+          document.getElementById('ctaText').value = 'Apply now';
+          ['apprenticeshipNameError','employerNameError','shortBenefitError','applyLinkError'].forEach(function (id) {
+            setError(id, '');
+          });
+          ['facebookOutput','instagramOutput','linkedinOutput'].forEach(function (id) {
+            document.getElementById(id).value = '';
+          });
+          updateHeadlinePreview();
+          document.getElementById('copyStatus').textContent = 'Fields cleared.';
+        });
+
+        document.getElementById('apprenticeshipName').addEventListener('input', updateHeadlinePreview);
+
+        document.querySelectorAll('[data-copy-target]').forEach(function (button) {
+          button.addEventListener('click', async function () {
+            const target = document.getElementById(button.getAttribute('data-copy-target'));
+            if (!target.value) return;
+            try {
+              await navigator.clipboard.writeText(target.value);
+              document.getElementById('copyStatus').textContent = 'Copy placed on the clipboard.';
+            } catch (error) {
+              target.select();
+              document.execCommand('copy');
+              document.getElementById('copyStatus').textContent = 'Copy placed on the clipboard.';
+            }
+          });
+        });
+
+        updateSliderLabels();
+        updateHeadlinePreview();
+        loadOverlay();
+        drawPreview();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>
