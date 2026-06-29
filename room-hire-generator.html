@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,9 @@
   <title>Room Hire Email Generator</title>
   <link rel="stylesheet" href="css/gds-theme.css" />
 </head>
+
 <body data-app-key="room-hire" data-app-title="Room Hire Email Generator" data-app-intro="Generate a booking link and ready-to-send email for room hire agreements.">
+
   <div id="app-shell"></div>
 
   <template id="app-page-content">
@@ -21,7 +24,7 @@
 
       <div class="form-group">
         <label for="rate">Rate</label>
-        <input type="text" id="rate" />
+        <input type="text" id="rate" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" />
       </div>
 
       <div class="form-group">
@@ -53,9 +56,26 @@
   </template>
 
   <script src="js/gds-shell.js"></script>
+
   <script>
     document.addEventListener('DOMContentLoaded', function () {
+
       const baseUrl = 'https://newbury-college.ac.uk/index.php?option=com_rsform&formId=59';
+
+      // --- LIVE INPUT CLEANING ---
+      const rateField = document.getElementById('rate');
+
+      rateField.addEventListener('input', function () {
+        this.value = this.value
+          .replace(/[^0-9.]/g, '')         // remove anything not number or dot
+          .replace(/(\..*?)\..*/g, '$1'); // only allow one decimal
+      });
+
+      function cleanRate(value) {
+        return value
+          .replace(/[^0-9.]/g, '')
+          .replace(/(\..*?)\..*/g, '$1');
+      }
 
       function copyText(id) {
         const text = document.getElementById(id).value;
@@ -68,29 +88,37 @@
       }
 
       document.getElementById('generateBtn').addEventListener('click', function () {
+
         const bookingRefRaw = document.getElementById('bookingRef').value.trim();
-        const rateRaw = document.getElementById('rate').value.trim();
+        let rateRaw = document.getElementById('rate').value.trim();
         const rateUnitRaw = document.getElementById('rateUnit').value;
 
+        // --- FINAL CLEAN (safety net) ---
+        rateRaw = cleanRate(rateRaw);
+
         if (!bookingRefRaw || !rateRaw) {
-          alert('Enter booking reference and rate');
+          alert('Enter booking reference and valid rate');
           return;
         }
 
         const bookingRef = encodeURIComponent(bookingRefRaw);
         const rate = encodeURIComponent(rateRaw);
         const rateUnit = encodeURIComponent(rateUnitRaw);
+
         const url = `${baseUrl}&form[rate]=${rate}&form[rateUnit]=${rateUnit}&form[bookingRef]=${bookingRef}`;
 
         document.getElementById('urlOutput').value = url;
-        document.getElementById('emailOutput').value = `Please use the following link to complete your room hire booking:
+        document.getElementById('emailOutput').value =
+`Please use the following link to complete your room hire booking:
 
 ${url}`;
       });
 
       document.getElementById('copyEmail').addEventListener('click', function () { copyText('emailOutput'); });
       document.getElementById('copyLinkBtn').addEventListener('click', function () { copyText('urlOutput'); });
+
     });
   </script>
+
 </body>
 </html>
