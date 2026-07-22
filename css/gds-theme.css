@@ -188,6 +188,7 @@ tbody td { padding: 12px; border-bottom: 1px solid var(--gds-border-light); vert
 
 .app-grid { display: grid; gap: 20px; }
 .app-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.app-grid--full { grid-template-columns: 1fr; }
 .app-note { background: #fff7f8; border-left: 6px solid var(--gds-primary); padding: 16px; margin: 0 0 24px; }
 .prompt-section--hidden { display: none; }
 code { background: var(--gds-background); padding: 1px 4px; }
