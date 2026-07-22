@@ -78,11 +78,14 @@ textarea:focus-visible {
 .app-nav__list { list-style: none; margin: 0; padding: 0; }
 .app-nav__item + .app-nav__item { border-top: 1px solid var(--gds-border-light); }
 .app-nav__link {
-  display: block; padding: 14px 20px; color: var(--gds-text); text-decoration: none;
+  display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: var(--gds-text); text-decoration: none;
   font-weight: 700; border-left: 4px solid transparent;
 }
 .app-nav__link:hover { background: #f8f8f8; color: var(--gds-text); }
 .app-nav__link[aria-current="page"] { border-left-color: var(--gds-primary); background: #fff7f8; }
+.app-nav__icon {
+  flex-shrink: 0; font-size: 1.125rem; color: var(--gds-primary); width: 1.25rem; text-align: center;
+}
 
 .app-main { min-width: 0; }
 .app-page { background: var(--gds-surface); border: 1px solid var(--gds-border-light); box-shadow: var(--gds-shadow); }

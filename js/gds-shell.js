@@ -1,11 +1,11 @@
 (function () {
   const navItems = [
-    { key: 'home', title: 'Home', href: 'index.html' },
-    { key: 'qr', title: 'QR Code Generator', href: 'qr.html' },
-    { key: 'resize', title: 'Image Resizer', href: 'resize.html' },
-    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html' },
-    { key: 'vacancy-builder', title: 'Apprenticeship Vacancy Builder', href: 'vacancy-post-builder.html' },
-    { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html' }
+    { key: 'home', title: 'Home', href: 'index.html', icon: 'fa-home' },
+    { key: 'qr', title: 'QR Code Generator', href: 'qr.html', icon: 'fa-qrcode' },
+    { key: 'resize', title: 'Image Resizer', href: 'resize.html', icon: 'fa-images' },
+    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', icon: 'fa-link' },
+    { key: 'vacancy-builder', title: 'Apprenticeship Vacancy Builder', href: 'vacancy-post-builder.html', icon: 'fa-bolt' },
+    { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-envelope' }
   ];
 
   function escapeHtml(value) {
@@ -20,7 +20,8 @@
   function buildNavigation(currentKey) {
     return navItems.map(function (item) {
       const current = item.key === currentKey ? ' aria-current="page"' : '';
-      return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + current + '>' + escapeHtml(item.title) + '</a></li>';
+      const icon = item.icon ? '<i class="app-nav__icon fas ' + item.icon + '"></i>' : '';
+      return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + current + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
     }).join('');
   }
 
