@@ -8,6 +8,13 @@
     { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-envelope' }
   ];
 
+  const externalItems = [
+    { title: 'Constant Contact', href: 'https://newburycollege.marketingautomation.services/', icon: 'fa-envelopes-bulk', external: true },
+    { title: 'Flare CMS', href: 'https://flare-cms.pixelnebula.com/login', icon: 'fa-tv', external: true },
+    { title: 'Short.io', href: 'https://app.short.io', icon: 'fa-link', external: true },
+    { title: 'Website Admin', href: 'https://www.newbury-college.ac.uk/administrator', icon: 'fa-joomla', external: true }
+  ];
+
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, '&amp;')
@@ -22,6 +29,14 @@
       const current = item.key === currentKey ? ' aria-current="page"' : '';
       const icon = item.icon ? '<i class="app-nav__icon fas ' + item.icon + '"></i>' : '';
       return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + current + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
+    }).join('');
+  }
+
+  function buildExternalLinks() {
+    return externalItems.map(function (item) {
+      const icon = item.icon ? '<i class="app-nav__icon fas ' + item.icon + '"></i>' : '';
+      const target = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
+      return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + target + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
     }).join('');
   }
 
@@ -50,7 +65,7 @@
       '<div class="app-header__meta"><a class="app-header__utility-link" href="https://livenewburycollegeac.sharepoint.com/sites/marketinghub">Return to SharePoint</a></div>' +
       '</div></header>' +
       '<div class="app-layout">' +
-      '<aside class="app-sidebar" aria-label="Toolkit navigation"><div class="app-sidebar__header"><h2 class="app-sidebar__title">Toolkit</h2><p class="app-sidebar__hint">Choose a tool to continue.</p></div><nav class="app-nav"><ul class="app-nav__list">' + buildNavigation(currentKey) + '</ul></nav></aside>' +
+      '<aside class="app-sidebar" aria-label="Toolkit navigation"><div class="app-sidebar__header"><h2 class="app-sidebar__title">Toolkit</h2><p class="app-sidebar__hint">Choose a tool to continue.</p></div><nav class="app-nav"><ul class="app-nav__list">' + buildNavigation(currentKey) + '</ul></nav><div class="app-sidebar__section"><h3 class="app-sidebar__section-title">External Platforms</h3><nav class="app-nav"><ul class="app-nav__list">' + buildExternalLinks() + '</ul></nav></div></aside>' +
       '<main class="app-main"><section class="app-page"><header class="app-page__header">' + buildBreadcrumbs(currentKey) + '<h1 class="app-page__title">' + escapeHtml(title) + '</h1>' + (intro ? '<p class="app-page__intro">' + escapeHtml(intro) + '</p>' : '') + '</header><div class="app-page__body" id="app-page-body">' + pageContentHtml + '</div></section></main>' +
       '</div>' +
       '<footer class="app-footer">Created by <a href="mailto:s-daubney@newbury-college.ac.uk">Shaun Daubney</a></footer>' +
