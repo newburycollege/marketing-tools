@@ -74,6 +74,8 @@ textarea:focus-visible {
 .app-sidebar__header { padding: 20px 20px 12px; border-bottom: 1px solid var(--gds-border-light); }
 .app-sidebar__title { margin: 0; font-size: 1.25rem; }
 .app-sidebar__hint { margin: 8px 0 0; color: var(--gds-secondary-text); font-size: 0.95rem; }
+.app-sidebar__section { padding: 16px 0; border-top: 1px solid var(--gds-border-light); }
+.app-sidebar__section-title { margin: 0 0 8px 20px; font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gds-secondary-text); }
 .app-nav { padding: 12px 0; }
 .app-nav__list { list-style: none; margin: 0; padding: 0; }
 .app-nav__item + .app-nav__item { border-top: 1px solid var(--gds-border-light); }
