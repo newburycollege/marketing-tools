@@ -78,11 +78,14 @@ textarea:focus-visible {
 .app-nav__list { list-style: none; margin: 0; padding: 0; }
 .app-nav__item + .app-nav__item { border-top: 1px solid var(--gds-border-light); }
 .app-nav__link {
-  display: block; padding: 14px 20px; color: var(--gds-text); text-decoration: none;
+  display: flex; align-items: center; gap: 12px; padding: 14px 20px; color: var(--gds-text); text-decoration: none;
   font-weight: 700; border-left: 4px solid transparent;
 }
 .app-nav__link:hover { background: #f8f8f8; color: var(--gds-text); }
 .app-nav__link[aria-current="page"] { border-left-color: var(--gds-primary); background: #fff7f8; }
+.app-nav__icon {
+  flex-shrink: 0; font-size: 1.125rem; color: var(--gds-primary); width: 1.25rem; text-align: center;
+}
 
 .app-main { min-width: 0; }
 .app-page { background: var(--gds-surface); border: 1px solid var(--gds-border-light); box-shadow: var(--gds-shadow); }
@@ -188,6 +191,7 @@ tbody td { padding: 12px; border-bottom: 1px solid var(--gds-border-light); vert
 
 .app-grid { display: grid; gap: 20px; }
 .app-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.app-grid--full { grid-template-columns: 1fr; }
 .app-note { background: #fff7f8; border-left: 6px solid var(--gds-primary); padding: 16px; margin: 0 0 24px; }
 .prompt-section--hidden { display: none; }
 code { background: var(--gds-background); padding: 1px 4px; }
