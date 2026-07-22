@@ -5,7 +5,7 @@
     { key: 'resize', title: 'Image Resizer', href: 'resize.html', icon: 'fa-images', prefix: 'fas' },
     { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', icon: 'fa-bullhorn', prefix: 'fas' },
     { key: 'vacancy-builder', title: 'Apprenticeship Vacancy Builder', href: 'vacancy-post-builder.html', icon: 'fa-bolt', prefix: 'fas' },
-    { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-envelope', prefix: 'fas' }
+    { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-person-shelter', prefix: 'fas' }
   ];
 
   const externalItems = [
