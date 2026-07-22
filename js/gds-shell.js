@@ -1,18 +1,18 @@
 (function () {
   const navItems = [
-    { key: 'home', title: 'Home', href: 'index.html', icon: 'fa-home' },
-    { key: 'qr', title: 'QR Code Generator', href: 'qr.html', icon: 'fa-qrcode' },
-    { key: 'resize', title: 'Image Resizer', href: 'resize.html', icon: 'fa-images' },
-    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', icon: 'fa-link' },
-    { key: 'vacancy-builder', title: 'Apprenticeship Vacancy Builder', href: 'vacancy-post-builder.html', icon: 'fa-bolt' },
-    { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-envelope' }
+    { key: 'home', title: 'Home', href: 'index.html', icon: 'fa-home', prefix: 'fas' },
+    { key: 'qr', title: 'QR Code Generator', href: 'qr.html', icon: 'fa-qrcode', prefix: 'fas' },
+    { key: 'resize', title: 'Image Resizer', href: 'resize.html', icon: 'fa-images', prefix: 'fas' },
+    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', icon: 'fa-bullhorn', prefix: 'fas' },
+    { key: 'vacancy-builder', title: 'Apprenticeship Vacancy Builder', href: 'vacancy-post-builder.html', icon: 'fa-bolt', prefix: 'fas' },
+    { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-envelope', prefix: 'fas' }
   ];
 
   const externalItems = [
-    { title: 'Constant Contact', href: 'https://newburycollege.marketingautomation.services/', icon: 'fa-envelopes-bulk', external: true },
-    { title: 'Flare CMS', href: 'https://flare-cms.pixelnebula.com/login', icon: 'fa-tv', external: true },
-    { title: 'Short.io', href: 'https://app.short.io', icon: 'fa-link', external: true },
-    { title: 'Website Admin', href: 'https://www.newbury-college.ac.uk/administrator', icon: 'fa-joomla', external: true }
+    { title: 'Constant Contact', href: 'https://newburycollege.marketingautomation.services/', icon: 'fa-envelopes-bulk', prefix: 'fas', external: true },
+    { title: 'Flare CMS', href: 'https://flare-cms.pixelnebula.com/login', icon: 'fa-tv', prefix: 'fas', external: true },
+    { title: 'Short.io', href: 'https://app.short.io', icon: 'fa-link', prefix: 'fas', external: true },
+    { title: 'Website Admin', href: 'https://www.newbury-college.ac.uk/administrator', icon: 'fa-joomla', prefix: 'fab', external: true }
   ];
 
   function escapeHtml(value) {
@@ -27,14 +27,16 @@
   function buildNavigation(currentKey) {
     return navItems.map(function (item) {
       const current = item.key === currentKey ? ' aria-current="page"' : '';
-      const icon = item.icon ? '<i class="app-nav__icon fas ' + item.icon + '"></i>' : '';
+      const prefix = item.prefix || 'fas';
+      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '"></i>' : '';
       return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + current + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
     }).join('');
   }
 
   function buildExternalLinks() {
     return externalItems.map(function (item) {
-      const icon = item.icon ? '<i class="app-nav__icon fas ' + item.icon + '"></i>' : '';
+      const prefix = item.prefix || 'fas';
+      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '"></i>' : '';
       const target = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
       return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + target + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
     }).join('');
