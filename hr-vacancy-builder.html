@@ -47,6 +47,23 @@
       margin: 0 0 16px;
       color: var(--gds-text);
     }
+    .vacancy-instructions {
+      margin-bottom: 24px;
+    }
+    .vacancy-instructions ol {
+      margin: 0;
+      padding-left: 1.5rem;
+    }
+    .vacancy-instructions li + li {
+      margin-top: 12px;
+    }
+    .vacancy-instructions__prompt {
+      background: var(--gds-background);
+      border-left: 4px solid var(--gds-primary);
+      margin: 8px 0 0;
+      overflow-wrap: anywhere;
+      padding: 14px 16px;
+    }
     @media (max-width: 980px) {
       .vacancy-builder-layout {
         grid-template-columns: 1fr;
@@ -58,9 +75,24 @@
   <div id="app-shell"></div>
 
   <template id="app-page-content">
-    <div class="app-note">
-      Upload a background image and fill in the job details. The vacancy graphic will be dynamically generated with a red section containing the job title and details with icons.
-    </div>
+
+    <section class="app-card vacancy-instructions" aria-labelledby="vacancy-instructions-title">
+      <h2 id="vacancy-instructions-title" class="app-section-title">Instructions</h2>
+      <ol>
+        <li>Visit <a href="https://m365.cloud.microsoft/chat" target=_blank>Copilot</a>.</li>
+        <li>
+          Use the following prompt (remove brackets and edit as required):
+          <blockquote class="vacancy-instructions__prompt">
+            Create a photo of an adult [male/female] wearing a [yellow/blue] lanyard and staff ID badge, [teaching 16 year old college students in a modern classroom setting]
+          </blockquote>
+        </li>
+<li>Download a copy of the generated photo.</li>
+<li>Upload in the next section.</li>
+<li>Add vacancy details.</li>
+<li>Update preview.</li>
+<li>Download image.</li>
+      </ol>
+    </section>
 
     <div class="vacancy-builder-layout">
       <section class="app-form" aria-labelledby="vacancy-image-title">
@@ -118,8 +150,7 @@
       <div class="app-grid app-grid--two">
         <div class="form-group">
           <label for="jobTitle">Job title</label>
-       
-          <input type="text" id="jobTitle" placeholder="For example, Head of Side Quests" />
+          <input type="text" id="jobTitle" placeholder="For example, Director of Side Quests" />
           <p class="error-message" id="jobTitleError"></p>
         </div>
         <div class="form-group">
@@ -157,7 +188,7 @@
         </div>
         <div class="form-group">
           <label for="salary">Salary</label>
-         
+          <p class="hint-text" id="salaryHint"></p>
           <input
             type="number"
             id="salary"
