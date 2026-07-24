@@ -161,17 +161,101 @@ label,
 .hint-text,
 .app-hint { font-size: 1rem; color: var(--gds-secondary-text); margin: 0 0 6px; }
 
-input[type="text"],
+input[type="date"],
+input[type="email"],
 input[type="file"],
+input[type="number"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="text"],
+input[type="time"],
+input[type="url"],
+select,
+textarea,
 .app-select,
 .app-textarea {
   width: 100%; max-width: 100%; min-height: 44px; padding: 10px 12px;
-  border: 2px solid var(--gds-text); border-radius: 0; font: inherit; background: #ffffff;
+  border: 2px solid var(--gds-text); border-radius: 0; color: var(--gds-text); font: inherit; background-color: #ffffff;
 }
 input[type="file"] { padding: 8px; }
+select,
+.app-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%230b0c0c' stroke-width='2'/%3E%3C/svg%3E");
+  background-position: right 14px center;
+  background-repeat: no-repeat;
+  padding-right: 44px;
+}
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background-color: var(--gds-background);
+  color: var(--gds-secondary-text);
+  cursor: not-allowed;
+  opacity: 1;
+}
 .app-textarea { min-height: 120px; resize: vertical; }
 .error-message { color: var(--gds-error); font-weight: 700; margin: 6px 0 0; }
 .error-input { border-color: var(--gds-error) !important; border-left-width: 6px !important; }
+
+.vacancy-salary-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+.vacancy-toggle-fieldset {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.vacancy-toggle-fieldset legend {
+  font-weight: 700;
+  margin-bottom: 8px;
+  padding: 0;
+}
+.vacancy-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+label.vacancy-toggle-option {
+  cursor: pointer;
+  display: inline-block;
+  margin: 0;
+  position: relative;
+}
+.vacancy-toggle-option input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+.vacancy-toggle-option span {
+  align-items: center;
+  background: #ffffff;
+  border: 2px solid var(--gds-border);
+  display: inline-flex;
+  line-height: 1.2;
+  min-height: 44px;
+  padding: 9px 14px;
+  user-select: none;
+}
+.vacancy-toggle-option input:checked + span {
+  background: var(--gds-primary);
+  border-color: var(--gds-primary);
+  color: #ffffff;
+}
+.vacancy-toggle-option:hover span {
+  border-color: var(--gds-primary);
+}
+.vacancy-toggle-option input:focus-visible + span {
+  box-shadow: 0 -2px var(--gds-focus), 0 4px var(--gds-focus-text);
+  outline: 3px solid var(--gds-focus);
+  outline-offset: 0;
+}
 
 .button-row,
 .app-button-row,
@@ -240,6 +324,7 @@ code { background: var(--gds-background); padding: 1px 4px; }
   .app-form,
   .app-card { padding: 20px 16px 24px; }
   .app-grid--two { grid-template-columns: 1fr; }
+  .vacancy-salary-controls { grid-template-columns: 1fr; }
   thead { display: none; }
   table,
   tbody,
