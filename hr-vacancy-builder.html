@@ -251,6 +251,8 @@
       const TEXT_MARGIN_LEFT = 78;
       const TEXT_COLOR = '#ffffff';
       const RED_COLOR = '#F42941';
+      const RED_SECTION_OPACITY = 0.9;
+      const RED_SECTION_BLUR_PX = 14;
       const DARK_BADGE_COLOR = '#262626';
 
       function boot() {
@@ -303,8 +305,7 @@
           ctx.closePath();
         }
 
-        function drawRedSection(ctx, yStart) {
-          ctx.fillStyle = RED_COLOR;
+        function redSectionPath(ctx, yStart) {
           ctx.beginPath();
           ctx.moveTo(0, OUTPUT_SIZE);
           ctx.lineTo(0, yStart + RED_SECTION_CORNER_RADIUS);
@@ -313,7 +314,51 @@
           ctx.quadraticCurveTo(OUTPUT_SIZE, yStart, OUTPUT_SIZE, yStart + RED_SECTION_CORNER_RADIUS);
           ctx.lineTo(OUTPUT_SIZE, OUTPUT_SIZE);
           ctx.closePath();
-          ctx.fill();
+        }
+
+        function getBackgroundPlacement(image) {
+          const zoom = Number(zoomRange.value);
+          const xOffset = Number(xRange.value) / 100;
+          const yOffset = Number(yRange.value) / 100;
+          const coverScale = Math.max(OUTPUT_SIZE / image.width, OUTPUT_SIZE / image.height);
+          const scale = coverScale * zoom;
+          const drawWidth = image.width * scale;
+          const drawHeight = image.height * scale;
+          const maxOffset = OUTPUT_SIZE * 0.5;
+
+          return {
+            x: ((OUTPUT_SIZE - drawWidth) / 2) + (xOffset * maxOffset),
+            y: ((OUTPUT_SIZE - drawHeight) / 2) + (yOffset * maxOffset),
+            width: drawWidth,
+            height: drawHeight
+          };
+        }
+
+        function drawPlacedBackground(ctx, image, placement) {
+          ctx.drawImage(
+            image,
+            placement.x,
+            placement.y,
+            placement.width,
+            placement.height
+          );
+        }
+
+        function drawRedSection(ctx, yStart, image, placement) {
+          ctx.save();
+          redSectionPath(ctx, yStart);
+          ctx.clip();
+
+          if (image && placement) {
+            ctx.filter = 'blur(' + RED_SECTION_BLUR_PX + 'px)';
+            drawPlacedBackground(ctx, image, placement);
+            ctx.filter = 'none';
+          }
+
+          ctx.globalAlpha = RED_SECTION_OPACITY;
+          ctx.fillStyle = RED_COLOR;
+          ctx.fillRect(0, yStart, OUTPUT_SIZE, OUTPUT_SIZE - yStart);
+          ctx.restore();
         }
 
         function drawVacancyBadge(ctx, yStart) {
@@ -598,24 +643,13 @@
             return;
           }
 
-          const zoom = Number(zoomRange.value);
-          const xOffset = Number(xRange.value) / 100;
-          const yOffset = Number(yRange.value) / 100;
-
-          const coverScale = Math.max(OUTPUT_SIZE / backgroundImage.width, OUTPUT_SIZE / backgroundImage.height);
-          const scale = coverScale * zoom;
-          const drawWidth = backgroundImage.width * scale;
-          const drawHeight = backgroundImage.height * scale;
-          const maxOffset = OUTPUT_SIZE * 0.5;
-          const drawX = ((OUTPUT_SIZE - drawWidth) / 2) + (xOffset * maxOffset);
-          const drawY = ((OUTPUT_SIZE - drawHeight) / 2) + (yOffset * maxOffset);
-
-          previewCtx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+          const backgroundPlacement = getBackgroundPlacement(backgroundImage);
+          drawPlacedBackground(previewCtx, backgroundImage, backgroundPlacement);
 
           const jobTitle = document.getElementById('jobTitle').value.trim();
           if (jobTitle) {
             const redSectionY = OUTPUT_SIZE * (1 - RED_SECTION_HEIGHT_RATIO);
-            drawRedSection(previewCtx, redSectionY);
+            drawRedSection(previewCtx, redSectionY, backgroundImage, backgroundPlacement);
             drawVacancyBadge(previewCtx, redSectionY);
             drawJobTitle(previewCtx, redSectionY, jobTitle);
             drawJobDetails(previewCtx, redSectionY);
@@ -647,24 +681,16 @@
           ctx.fillStyle = '#e6e6e6';
           ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
 
+          let backgroundPlacement = null;
           if (backgroundImage) {
-            const zoom = Number(zoomRange.value);
-            const xOffset = Number(xRange.value) / 100;
-            const yOffset = Number(yRange.value) / 100;
-            const coverScale = Math.max(OUTPUT_SIZE / backgroundImage.width, OUTPUT_SIZE / backgroundImage.height);
-            const scale = coverScale * zoom;
-            const drawWidth = backgroundImage.width * scale;
-            const drawHeight = backgroundImage.height * scale;
-            const maxOffset = OUTPUT_SIZE * 0.5;
-            const drawX = ((OUTPUT_SIZE - drawWidth) / 2) + (xOffset * maxOffset);
-            const drawY = ((OUTPUT_SIZE - drawHeight) / 2) + (yOffset * maxOffset);
-            ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+            backgroundPlacement = getBackgroundPlacement(backgroundImage);
+            drawPlacedBackground(ctx, backgroundImage, backgroundPlacement);
           }
 
           const jobTitle = document.getElementById('jobTitle').value.trim();
           if (jobTitle) {
             const redSectionY = OUTPUT_SIZE * (1 - RED_SECTION_HEIGHT_RATIO);
-            drawRedSection(ctx, redSectionY);
+            drawRedSection(ctx, redSectionY, backgroundImage, backgroundPlacement);
             drawVacancyBadge(ctx, redSectionY);
             drawJobTitle(ctx, redSectionY, jobTitle);
             drawJobDetails(ctx, redSectionY);
