@@ -118,8 +118,8 @@
       <div class="app-grid app-grid--two">
         <div class="form-group">
           <label for="jobTitle">Job title</label>
-          <p class="hint-text">The main job title that will be displayed prominently.</p>
-          <input type="text" id="jobTitle" placeholder="For example, Marketing Manager" />
+       
+          <input type="text" id="jobTitle" placeholder="For example, Head of Side Quests" />
           <p class="error-message" id="jobTitleError"></p>
         </div>
         <div class="form-group">
@@ -131,17 +131,75 @@
       <div class="app-grid app-grid--two">
         <div class="form-group">
           <label for="employmentType">Employment type</label>
-          <input type="text" id="employmentType" placeholder="For example, Full-time, Part-time" />
+          <select id="employmentType">
+            <option value="">Select employment type</option>
+            <option>Full-time, permanent</option>
+            <option>Full-time, fixed term</option>
+            <option>Full-time, temporary</option>
+            <option>Full-time, term-time only</option>
+            <option>Part-time, permanent</option>
+            <option>Part-time, fixed term</option>
+            <option>Part-time, temporary</option>
+            <option>Part-time, term-time only</option>
+            <option>Part-time, sessional</option>
+            <option>Variable hours, permanent</option>
+            <option>Variable hours, fixed term</option>
+            <option>Hourly paid</option>
+            <option>Casual or bank</option>
+            <option>Supply or relief</option>
+            <option>Apprenticeship</option>
+            <option>Internship or placement</option>
+            <option>Secondment</option>
+            <option>Maternity cover</option>
+            <option>Voluntary</option>
+            <option>Other or flexible arrangement</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="salary">Salary</label>
-          <input type="text" id="salary" placeholder="For example, £25,000 per year" />
+         
+          <input
+            type="number"
+            id="salary"
+            min="0"
+            step="0.01"
+            inputmode="decimal"
+            placeholder="Enter numbers only"
+            aria-describedby="salaryHint"
+          />
+
+          <div class="vacancy-salary-controls">
+            <fieldset class="vacancy-toggle-fieldset">
+              <legend>Payment basis</legend>
+              <div class="vacancy-toggle-group">
+                <label class="vacancy-toggle-option">
+                  <input type="radio" name="salaryPeriod" value="annum" checked />
+                  <span>Per annum</span>
+                </label>
+                <label class="vacancy-toggle-option">
+                  <input type="radio" name="salaryPeriod" value="hour" />
+                  <span>Per hour</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="vacancy-toggle-fieldset">
+              <legend>Adjustment</legend>
+              <div class="vacancy-toggle-group">
+                <label class="vacancy-toggle-option">
+                  <input type="checkbox" id="salaryProRata" />
+                  <span>Pro-rata</span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
         </div>
       </div>
 
       <div class="form-group">
         <label for="closingDate">Closing date</label>
-        <input type="text" id="closingDate" placeholder="For example, 30 June 2026" />
+        <p class="hint-text">Choose a date. It will appear on the image as DD MMM YYYY.</p>
+        <input type="date" id="closingDate" />
       </div>
 
       <div class="app-button-row">
@@ -156,13 +214,13 @@
   <script>
     (function () {
       const OUTPUT_SIZE = 1080;
-      const RED_SECTION_HEIGHT_RATIO = 0.45;
-      const ICON_SIZE = 32;
-      const ICON_SPACING = 20;
-      const TEXT_MARGIN_LEFT = 65;
+      const RED_SECTION_HEIGHT_RATIO = 0.397;
+      const RED_SECTION_CORNER_RADIUS = 54;
+      const ICON_SIZE = 48;
+      const TEXT_MARGIN_LEFT = 78;
       const TEXT_COLOR = '#ffffff';
-      const RED_COLOR = '#EE3C4E';
-      const DARK_BADGE_COLOR = '#1a1a1a';
+      const RED_COLOR = '#F42941';
+      const DARK_BADGE_COLOR = '#262626';
 
       function boot() {
         const canvas = document.getElementById('vacancyPreviewCanvas');
@@ -192,8 +250,6 @@
         const detailsStatus = document.getElementById('detailsStatus');
 
         let backgroundImage = null;
-        const svgIcons = {};
-        let svgsLoaded = false;
 
         function updateSliderLabels() {
           zoomValue.textContent = Number(zoomRange.value).toFixed(2) + '×';
@@ -201,132 +257,302 @@
           yValue.textContent = yRange.value;
         }
 
-        function loadSVGs() {
-          const iconNames = ['pin', 'calendar', 'money', 'clock'];
-          let loadedCount = 0;
-
-          iconNames.forEach(function (name) {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = function () {
-              svgIcons[name] = img;
-              loadedCount++;
-              if (loadedCount === iconNames.length) {
-                svgsLoaded = true;
-                drawPreview();
-              }
-            };
-            img.onerror = function () {
-              console.error('Failed to load SVG: ' + name);
-              loadedCount++;
-              if (loadedCount === iconNames.length) {
-                svgsLoaded = true;
-                drawPreview();
-              }
-            };
-            img.src = 'img/' + name + '.svg?t=' + Date.now();
-          });
+        function roundedRectPath(ctx, x, y, width, height, radius) {
+          const safeRadius = Math.min(radius, width / 2, height / 2);
+          ctx.beginPath();
+          ctx.moveTo(x + safeRadius, y);
+          ctx.lineTo(x + width - safeRadius, y);
+          ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+          ctx.lineTo(x + width, y + height - safeRadius);
+          ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+          ctx.lineTo(x + safeRadius, y + height);
+          ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+          ctx.lineTo(x, y + safeRadius);
+          ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+          ctx.closePath();
         }
 
         function drawRedSection(ctx, yStart) {
           ctx.fillStyle = RED_COLOR;
-          ctx.fillRect(0, yStart, OUTPUT_SIZE, OUTPUT_SIZE - yStart);
+          ctx.beginPath();
+          ctx.moveTo(0, OUTPUT_SIZE);
+          ctx.lineTo(0, yStart + RED_SECTION_CORNER_RADIUS);
+          ctx.quadraticCurveTo(0, yStart, RED_SECTION_CORNER_RADIUS, yStart);
+          ctx.lineTo(OUTPUT_SIZE - RED_SECTION_CORNER_RADIUS, yStart);
+          ctx.quadraticCurveTo(OUTPUT_SIZE, yStart, OUTPUT_SIZE, yStart + RED_SECTION_CORNER_RADIUS);
+          ctx.lineTo(OUTPUT_SIZE, OUTPUT_SIZE);
+          ctx.closePath();
+          ctx.fill();
         }
 
         function drawVacancyBadge(ctx, yStart) {
-          const badgeY = yStart - 20;
-          const badgeX = 30;
-          const badgeWidth = 160;
-          const badgeHeight = 40;
-          const badgeRadius = 20;
+          const badgeY = yStart - 29;
+          const badgeX = 97;
+          const badgeWidth = 277;
+          const badgeHeight = 71;
+          const badgeRadius = badgeHeight / 2;
 
           ctx.fillStyle = DARK_BADGE_COLOR;
-          ctx.beginPath();
-          ctx.moveTo(badgeX + badgeRadius, badgeY);
-          ctx.lineTo(badgeX + badgeWidth - badgeRadius, badgeY);
-          ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY, badgeX + badgeWidth, badgeY + badgeRadius);
-          ctx.lineTo(badgeX + badgeWidth, badgeY + badgeHeight - badgeRadius);
-          ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY + badgeHeight, badgeX + badgeWidth - badgeRadius, badgeY + badgeHeight);
-          ctx.lineTo(badgeX + badgeRadius, badgeY + badgeHeight);
-          ctx.quadraticCurveTo(badgeX, badgeY + badgeHeight, badgeX, badgeY + badgeHeight - badgeRadius);
-          ctx.lineTo(badgeX, badgeY + badgeRadius);
-          ctx.quadraticCurveTo(badgeX, badgeY, badgeX + badgeRadius, badgeY);
+          roundedRectPath(ctx, badgeX, badgeY, badgeWidth, badgeHeight, badgeRadius);
           ctx.fill();
 
           ctx.fillStyle = TEXT_COLOR;
-          ctx.font = 'bold 18px Arial, sans-serif';
+          ctx.font = 'bold 44px Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('VACANCY', badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+          ctx.fillText('VACANCY', badgeX + badgeWidth / 2, badgeY + badgeHeight / 2 + 6);
         }
 
-        function drawJobTitle(ctx, yStart, jobTitle) {
-          const titleY = yStart + 60;
-          ctx.fillStyle = TEXT_COLOR;
-          ctx.font = 'bold 48px Arial, sans-serif';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'top';
-
-          const maxWidth = OUTPUT_SIZE - 60;
-          const lineHeight = 55;
-          const words = jobTitle.split(' ');
+        function wrapText(ctx, text, maxWidth) {
+          const words = text.split(/\s+/).filter(Boolean);
+          const lines = [];
           let line = '';
-          let y = titleY;
 
           words.forEach(function (word) {
-            const testLine = line + (line ? ' ' : '') + word;
-            const metrics = ctx.measureText(testLine);
-            if (metrics.width > maxWidth && line) {
-              ctx.fillText(line, 30, y);
+            const testLine = line ? line + ' ' + word : word;
+            if (ctx.measureText(testLine).width > maxWidth && line) {
+              lines.push(line);
               line = word;
-              y += lineHeight;
             } else {
               line = testLine;
             }
           });
+
           if (line) {
-            ctx.fillText(line, 30, y);
+            lines.push(line);
           }
+          return lines;
         }
 
-        function drawDetailItem(ctx, x, y, iconName, text) {
-          if (svgIcons[iconName]) {
-            ctx.drawImage(svgIcons[iconName], x, y, ICON_SIZE, ICON_SIZE);
+        function fitTextWithEllipsis(ctx, text, maxWidth) {
+          if (ctx.measureText(text).width <= maxWidth) {
+            return text;
           }
 
+          let shortened = text;
+          while (shortened.length > 1 && ctx.measureText(shortened + '…').width > maxWidth) {
+            shortened = shortened.slice(0, -1).trimEnd();
+          }
+          return shortened + '…';
+        }
+
+        function getJobTitleLayout(ctx, jobTitle, maxWidth, maxHeight) {
+          const minimumFontSize = 44;
+
+          for (let fontSize = 92; fontSize >= minimumFontSize; fontSize -= 2) {
+            const lineHeight = Math.round(fontSize * 1.08);
+            ctx.font = 'bold ' + fontSize + 'px Arial, sans-serif';
+            const lines = wrapText(ctx, jobTitle, maxWidth);
+            const widestLine = lines.reduce(function (widest, line) {
+              return Math.max(widest, ctx.measureText(line).width);
+            }, 0);
+
+            if (lines.length <= 2 && widestLine <= maxWidth && (lines.length * lineHeight) <= maxHeight) {
+              return { fontSize: fontSize, lineHeight: lineHeight, lines: lines };
+            }
+          }
+
+          ctx.font = 'bold ' + minimumFontSize + 'px Arial, sans-serif';
+          const fallbackLines = wrapText(ctx, jobTitle, maxWidth);
+          const firstLine = fallbackLines[0] || '';
+          const remainingText = fallbackLines.slice(1).join(' ');
+          return {
+            fontSize: minimumFontSize,
+            lineHeight: Math.round(minimumFontSize * 1.08),
+            lines: [
+              fitTextWithEllipsis(ctx, firstLine, maxWidth),
+              fitTextWithEllipsis(ctx, remainingText, maxWidth)
+            ].filter(Boolean)
+          };
+        }
+
+        function drawJobTitle(ctx, yStart, jobTitle) {
+          const titleX = 108;
+          const titleY = yStart + 82;
+          const maxWidth = OUTPUT_SIZE - titleX - 90;
+          const maxHeight = 144;
+          const layout = getJobTitleLayout(ctx, jobTitle, maxWidth, maxHeight);
+
           ctx.fillStyle = TEXT_COLOR;
-          ctx.font = '16px Arial, sans-serif';
+          ctx.font = 'bold ' + layout.fontSize + 'px Arial, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+
+          layout.lines.forEach(function (line, index) {
+            ctx.fillText(line, titleX, titleY + (index * layout.lineHeight));
+          });
+        }
+
+        function drawIcon(ctx, iconName, x, y) {
+          const scale = ICON_SIZE / 32;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.scale(scale, scale);
+          ctx.strokeStyle = TEXT_COLOR;
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          if (iconName === 'pin') {
+            ctx.beginPath();
+            ctx.moveTo(16, 31);
+            ctx.bezierCurveTo(12, 26, 5, 20, 5, 12);
+            ctx.bezierCurveTo(5, 6.5, 10, 2, 16, 2);
+            ctx.bezierCurveTo(22, 2, 27, 6.5, 27, 12);
+            ctx.bezierCurveTo(27, 20, 20, 26, 16, 31);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(16, 13, 4, 0, Math.PI * 2);
+            ctx.stroke();
+          } else if (iconName === 'clock') {
+            ctx.beginPath();
+            ctx.arc(16, 16, 14, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(16, 8);
+            ctx.lineTo(16, 16);
+            ctx.lineTo(22, 20);
+            ctx.stroke();
+          } else if (iconName === 'money') {
+            const frontNoteOffsetX = -1 / scale;
+            const frontNoteCentreX = 14 + frontNoteOffsetX;
+
+            roundedRectPath(ctx, frontNoteOffsetX, 7, 28, 19, 4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(7, 4);
+            ctx.lineTo(25, 4);
+            ctx.quadraticCurveTo(30, 4, 30, 9);
+            ctx.lineTo(30, 22);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(frontNoteCentreX, 16.5, 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(6 + frontNoteOffsetX, 13);
+            ctx.lineTo(6 + frontNoteOffsetX, 20);
+            ctx.moveTo(22 + frontNoteOffsetX, 13);
+            ctx.lineTo(22 + frontNoteOffsetX, 20);
+            ctx.stroke();
+          } else if (iconName === 'calendar') {
+            roundedRectPath(ctx, 3, 5, 26, 24, 4);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(4, 12);
+            ctx.lineTo(28, 12);
+            ctx.moveTo(10, 2);
+            ctx.lineTo(10, 8);
+            ctx.moveTo(22, 2);
+            ctx.lineTo(22, 8);
+            ctx.stroke();
+            [10, 16, 22].forEach(function (dotX) {
+              [17, 23].forEach(function (dotY) {
+                ctx.beginPath();
+                ctx.arc(dotX, dotY, 1, 0, Math.PI * 2);
+                ctx.fillStyle = TEXT_COLOR;
+                ctx.fill();
+              });
+            });
+          }
+
+          ctx.restore();
+        }
+
+        function drawDetailItem(ctx, x, y, iconName, text, maxTextWidth) {
+          drawIcon(ctx, iconName, x, y);
+          ctx.fillStyle = TEXT_COLOR;
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(text, x + TEXT_MARGIN_LEFT, y + ICON_SIZE / 2);
+
+          let fontSize = 38;
+          const minimumFontSize = 20;
+          while (fontSize > minimumFontSize) {
+            ctx.font = fontSize + 'px Arial, sans-serif';
+            if (ctx.measureText(text).width <= maxTextWidth) {
+              break;
+            }
+            fontSize -= 1;
+          }
+          ctx.font = fontSize + 'px Arial, sans-serif';
+
+          ctx.fillText(
+            fitTextWithEllipsis(ctx, text, maxTextWidth),
+            x + TEXT_MARGIN_LEFT,
+            y + ICON_SIZE / 2
+          );
+        }
+
+        function formatClosingDate(value) {
+          const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+          if (!match) {
+            return '';
+          }
+
+          const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+          return new Intl.DateTimeFormat('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }).format(date);
+        }
+
+        function formatSalary() {
+          const salaryValue = document.getElementById('salary').value;
+          const amount = Number(salaryValue);
+          if (!salaryValue || !Number.isFinite(amount) || amount < 0) {
+            return '';
+          }
+
+          const selectedPeriod = document.querySelector('input[name="salaryPeriod"]:checked');
+          const period = selectedPeriod ? selectedPeriod.value : 'annum';
+          const fractionDigits = period === 'hour' || !Number.isInteger(amount) ? 2 : 0;
+          const formattedAmount = new Intl.NumberFormat('en-GB', {
+            minimumFractionDigits: fractionDigits,
+            maximumFractionDigits: 2
+          }).format(amount);
+          let salaryText = '£' + formattedAmount + (period === 'hour' ? '/hour' : ' p.a.');
+
+          if (document.getElementById('salaryProRata').checked) {
+            salaryText += ', pro-rata';
+          }
+          return salaryText;
         }
 
         function drawJobDetails(ctx, yStart) {
           const location = document.getElementById('location').value.trim();
           const employmentType = document.getElementById('employmentType').value.trim();
-          const salary = document.getElementById('salary').value.trim();
-          const closingDate = document.getElementById('closingDate').value.trim();
+          const salary = formatSalary();
+          const closingDate = formatClosingDate(document.getElementById('closingDate').value);
 
-          let detailY = yStart + 250;
-          const detailSpacing = 60;
+          const leftX = 100;
+          const rightX = 559;
+          const firstRowY = yStart + 238;
+          const secondRowY = firstRowY + 90;
+          const leftTextWidth = rightX - (leftX + TEXT_MARGIN_LEFT) - 8;
+          const rightTextWidth = OUTPUT_SIZE - (rightX + TEXT_MARGIN_LEFT) - 42;
 
           if (location) {
-            drawDetailItem(ctx, 30, detailY, 'pin', location);
-            detailY += detailSpacing;
+            drawDetailItem(ctx, leftX, firstRowY, 'pin', location, leftTextWidth);
           }
 
           if (employmentType) {
-            drawDetailItem(ctx, 30, detailY, 'clock', employmentType);
-            detailY += detailSpacing;
+            drawDetailItem(ctx, rightX, firstRowY, 'clock', employmentType, rightTextWidth);
           }
 
           if (salary) {
-            drawDetailItem(ctx, 30, detailY, 'money', salary);
-            detailY += detailSpacing;
+            drawDetailItem(ctx, leftX, secondRowY, 'money', salary, leftTextWidth);
           }
 
           if (closingDate) {
-            drawDetailItem(ctx, 30, detailY, 'calendar', 'Closes ' + closingDate);
+            drawDetailItem(
+              ctx,
+              rightX,
+              secondRowY,
+              'calendar',
+              'Closes ' + closingDate,
+              rightTextWidth
+            );
           }
         }
 
@@ -405,7 +631,7 @@
           }
 
           const jobTitle = document.getElementById('jobTitle').value.trim();
-          if (jobTitle && svgsLoaded) {
+          if (jobTitle) {
             const redSectionY = OUTPUT_SIZE * (1 - RED_SECTION_HEIGHT_RATIO);
             drawRedSection(ctx, redSectionY);
             drawVacancyBadge(ctx, redSectionY);
@@ -500,13 +726,14 @@
           ['jobTitle', 'location', 'employmentType', 'salary', 'closingDate'].forEach(function (id) {
             document.getElementById(id).value = '';
           });
+          document.querySelector('input[name="salaryPeriod"][value="annum"]').checked = true;
+          document.getElementById('salaryProRata').checked = false;
           document.getElementById('jobTitleError').textContent = '';
           detailsStatus.textContent = 'Fields cleared.';
           drawPreview();
         });
 
         updateSliderLabels();
-        loadSVGs();
       }
 
       if (document.readyState === 'loading') {
