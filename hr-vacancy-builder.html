@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HR Vacancy Builder</title>
+  <link rel="stylesheet" href="css/gds-theme.css" />
+  <style>
+    .vacancy-builder-layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 520px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+    .vacancy-builder-preview-wrap {
+      background: #ffffff;
+      border: 1px solid var(--gds-border-light);
+      box-shadow: var(--gds-shadow);
+      padding: 16px;
+    }
+    #vacancyPreviewCanvas {
+      display: block;
+      width: 100%;
+      max-width: 540px;
+      aspect-ratio: 1 / 1;
+      background: #e6e6e6;
+      margin: 0 auto;
+      border: 1px solid var(--gds-border-light);
+    }
+    .vacancy-slider-value {
+      color: var(--gds-secondary-text);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+    .vacancy-builder-output-grid {
+      display: grid;
+      gap: 16px;
+    }
+    .vacancy-builder-output-card {
+      border: 1px solid var(--gds-border-light);
+      background: #ffffff;
+      padding: 16px;
+    }
+    .vacancy-builder-headline-preview {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 0 16px;
+      color: var(--gds-text);
+    }
+    @media (max-width: 980px) {
+      .vacancy-builder-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body data-app-key="hr-vacancy-builder" data-app-title="HR Vacancy Builder" data-app-intro="Create a 1080 × 1080 HR vacancy image with dynamically generated graphics and job details.">
+  <div id="app-shell"></div>
+
+  <template id="app-page-content">
+    <div class="app-note">
+      Upload a background image and fill in the job details. The vacancy graphic will be dynamically generated with a red section containing the job title and details with icons.
+    </div>
+
+    <div class="vacancy-builder-layout">
+      <section class="app-form" aria-labelledby="vacancy-image-title">
+        <h2 id="vacancy-image-title" class="app-section-title">Image setup</h2>
+
+        <div class="form-group">
+          <label for="backgroundImage">Background image</label>
+          <p class="hint-text">Upload a photo. It will be cropped to a square automatically.</p>
+          <input type="file" id="backgroundImage" accept="image/*" />
+        </div>
+
+        <div class="app-grid app-grid--two">
+          <div class="form-group">
+            <label for="zoomRange">Zoom</label>
+            <input type="range" id="zoomRange" min="1" max="3" step="0.01" value="1" />
+            <div class="vacancy-slider-value" id="zoomValue">1.00×</div>
+          </div>
+          <div class="form-group">
+            <label for="outputSize">Output size</label>
+            <input type="text" id="outputSize" value="1080 × 1080" readonly />
+          </div>
+        </div>
+
+        <div class="app-grid app-grid--two">
+          <div class="form-group">
+            <label for="xRange">Horizontal position</label>
+            <input type="range" id="xRange" min="-100" max="100" step="1" value="0" />
+            <div class="vacancy-slider-value" id="xValue">0</div>
+          </div>
+          <div class="form-group">
+            <label for="yRange">Vertical position</label>
+            <input type="range" id="yRange" min="-100" max="100" step="1" value="0" />
+            <div class="vacancy-slider-value" id="yValue">0</div>
+          </div>
+        </div>
+
+        <div class="app-button-row">
+          <button type="button" id="downloadImageButton" disabled>Download image</button>
+          <button type="button" class="btn-secondary" id="resetCropButton">Reset crop</button>
+        </div>
+        <p class="status-text" id="imageStatus">Upload a background image to begin.</p>
+      </section>
+
+      <section class="app-card">
+        <h2 class="app-section-title">Preview</h2>
+        <div class="vacancy-builder-preview-wrap">
+          <canvas id="vacancyPreviewCanvas" width="1080" height="1080"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <section class="app-form" aria-labelledby="vacancy-details-title" style="margin-top:24px;">
+      <h2 id="vacancy-details-title" class="app-section-title">Vacancy details</h2>
+
+      <div class="app-grid app-grid--two">
+        <div class="form-group">
+          <label for="jobTitle">Job title</label>
+          <p class="hint-text">The main job title that will be displayed prominently.</p>
+          <input type="text" id="jobTitle" placeholder="For example, Marketing Manager" />
+          <p class="error-message" id="jobTitleError"></p>
+        </div>
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input type="text" id="location" placeholder="For example, Newbury, Berkshire" />
+        </div>
+      </div>
+
+      <div class="app-grid app-grid--two">
+        <div class="form-group">
+          <label for="employmentType">Employment type</label>
+          <input type="text" id="employmentType" placeholder="For example, Full-time, Part-time" />
+        </div>
+        <div class="form-group">
+          <label for="salary">Salary</label>
+          <input type="text" id="salary" placeholder="For example, £25,000 per year" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="closingDate">Closing date</label>
+        <input type="text" id="closingDate" placeholder="For example, 30 June 2026" />
+      </div>
+
+      <div class="app-button-row">
+        <button type="button" id="updatePreviewButton">Update preview</button>
+        <button type="button" class="btn-secondary" id="clearDetailsButton">Clear fields</button>
+      </div>
+      <p class="status-text" id="detailsStatus">Fill in the job details and click Update preview.</p>
+    </section>
+  </template>
+
+  <script src="js/gds-shell.js"></script>
+  <script>
+    (function () {
+      const OUTPUT_SIZE = 1080;
+      const RED_SECTION_HEIGHT_RATIO = 0.45;
+      const ICON_SIZE = 32;
+      const ICON_SPACING = 20;
+      const TEXT_MARGIN_LEFT = 65;
+      const TEXT_COLOR = '#ffffff';
+      const RED_COLOR = '#EE3C4E';
+      const DARK_BADGE_COLOR = '#1a1a1a';
+
+      function boot() {
+        const canvas = document.getElementById('vacancyPreviewCanvas');
+        const backgroundInput = document.getElementById('backgroundImage');
+        if (!canvas || !backgroundInput) {
+          window.requestAnimationFrame(boot);
+          return;
+        }
+
+        if (canvas.dataset.initialised === 'true') {
+          return;
+        }
+        canvas.dataset.initialised = 'true';
+
+        const previewCtx = canvas.getContext('2d');
+        const zoomRange = document.getElementById('zoomRange');
+        const xRange = document.getElementById('xRange');
+        const yRange = document.getElementById('yRange');
+        const zoomValue = document.getElementById('zoomValue');
+        const xValue = document.getElementById('xValue');
+        const yValue = document.getElementById('yValue');
+        const imageStatus = document.getElementById('imageStatus');
+        const downloadImageButton = document.getElementById('downloadImageButton');
+        const resetCropButton = document.getElementById('resetCropButton');
+        const updatePreviewButton = document.getElementById('updatePreviewButton');
+        const clearDetailsButton = document.getElementById('clearDetailsButton');
+        const detailsStatus = document.getElementById('detailsStatus');
+
+        let backgroundImage = null;
+        const svgIcons = {};
+        let svgsLoaded = false;
+
+        function updateSliderLabels() {
+          zoomValue.textContent = Number(zoomRange.value).toFixed(2) + '×';
+          xValue.textContent = xRange.value;
+          yValue.textContent = yRange.value;
+        }
+
+        function loadSVGs() {
+          const iconNames = ['pin', 'calendar', 'money', 'clock'];
+          let loadedCount = 0;
+
+          iconNames.forEach(function (name) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function () {
+              svgIcons[name] = img;
+              loadedCount++;
+              if (loadedCount === iconNames.length) {
+                svgsLoaded = true;
+                drawPreview();
+              }
+            };
+            img.onerror = function () {
+              console.error('Failed to load SVG: ' + name);
+              loadedCount++;
+              if (loadedCount === iconNames.length) {
+                svgsLoaded = true;
+                drawPreview();
+              }
+            };
+            img.src = 'img/' + name + '.svg?t=' + Date.now();
+          });
+        }
+
+        function drawRedSection(ctx, yStart) {
+          ctx.fillStyle = RED_COLOR;
+          ctx.fillRect(0, yStart, OUTPUT_SIZE, OUTPUT_SIZE - yStart);
+        }
+
+        function drawVacancyBadge(ctx, yStart) {
+          const badgeY = yStart - 20;
+          const badgeX = 30;
+          const badgeWidth = 160;
+          const badgeHeight = 40;
+          const badgeRadius = 20;
+
+          ctx.fillStyle = DARK_BADGE_COLOR;
+          ctx.beginPath();
+          ctx.moveTo(badgeX + badgeRadius, badgeY);
+          ctx.lineTo(badgeX + badgeWidth - badgeRadius, badgeY);
+          ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY, badgeX + badgeWidth, badgeY + badgeRadius);
+          ctx.lineTo(badgeX + badgeWidth, badgeY + badgeHeight - badgeRadius);
+          ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY + badgeHeight, badgeX + badgeWidth - badgeRadius, badgeY + badgeHeight);
+          ctx.lineTo(badgeX + badgeRadius, badgeY + badgeHeight);
+          ctx.quadraticCurveTo(badgeX, badgeY + badgeHeight, badgeX, badgeY + badgeHeight - badgeRadius);
+          ctx.lineTo(badgeX, badgeY + badgeRadius);
+          ctx.quadraticCurveTo(badgeX, badgeY, badgeX + badgeRadius, badgeY);
+          ctx.fill();
+
+          ctx.fillStyle = TEXT_COLOR;
+          ctx.font = 'bold 18px Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('VACANCY', badgeX + badgeWidth / 2, badgeY + badgeHeight / 2);
+        }
+
+        function drawJobTitle(ctx, yStart, jobTitle) {
+          const titleY = yStart + 60;
+          ctx.fillStyle = TEXT_COLOR;
+          ctx.font = 'bold 48px Arial, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+
+          const maxWidth = OUTPUT_SIZE - 60;
+          const lineHeight = 55;
+          const words = jobTitle.split(' ');
+          let line = '';
+          let y = titleY;
+
+          words.forEach(function (word) {
+            const testLine = line + (line ? ' ' : '') + word;
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > maxWidth && line) {
+              ctx.fillText(line, 30, y);
+              line = word;
+              y += lineHeight;
+            } else {
+              line = testLine;
+            }
+          });
+          if (line) {
+            ctx.fillText(line, 30, y);
+          }
+        }
+
+        function drawDetailItem(ctx, x, y, iconName, text) {
+          if (svgIcons[iconName]) {
+            ctx.drawImage(svgIcons[iconName], x, y, ICON_SIZE, ICON_SIZE);
+          }
+
+          ctx.fillStyle = TEXT_COLOR;
+          ctx.font = '16px Arial, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(text, x + TEXT_MARGIN_LEFT, y + ICON_SIZE / 2);
+        }
+
+        function drawJobDetails(ctx, yStart) {
+          const location = document.getElementById('location').value.trim();
+          const employmentType = document.getElementById('employmentType').value.trim();
+          const salary = document.getElementById('salary').value.trim();
+          const closingDate = document.getElementById('closingDate').value.trim();
+
+          let detailY = yStart + 250;
+          const detailSpacing = 60;
+
+          if (location) {
+            drawDetailItem(ctx, 30, detailY, 'pin', location);
+            detailY += detailSpacing;
+          }
+
+          if (employmentType) {
+            drawDetailItem(ctx, 30, detailY, 'clock', employmentType);
+            detailY += detailSpacing;
+          }
+
+          if (salary) {
+            drawDetailItem(ctx, 30, detailY, 'money', salary);
+            detailY += detailSpacing;
+          }
+
+          if (closingDate) {
+            drawDetailItem(ctx, 30, detailY, 'calendar', 'Closes ' + closingDate);
+          }
+        }
+
+        function drawPreview() {
+          previewCtx.clearRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+          previewCtx.fillStyle = '#e6e6e6';
+          previewCtx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+
+          if (!backgroundImage) {
+            imageStatus.textContent = 'Upload a background image to begin.';
+            downloadImageButton.disabled = true;
+            return;
+          }
+
+          const zoom = Number(zoomRange.value);
+          const xOffset = Number(xRange.value) / 100;
+          const yOffset = Number(yRange.value) / 100;
+
+          const coverScale = Math.max(OUTPUT_SIZE / backgroundImage.width, OUTPUT_SIZE / backgroundImage.height);
+          const scale = coverScale * zoom;
+          const drawWidth = backgroundImage.width * scale;
+          const drawHeight = backgroundImage.height * scale;
+          const maxOffset = OUTPUT_SIZE * 0.5;
+          const drawX = ((OUTPUT_SIZE - drawWidth) / 2) + (xOffset * maxOffset);
+          const drawY = ((OUTPUT_SIZE - drawHeight) / 2) + (yOffset * maxOffset);
+
+          previewCtx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+
+          const jobTitle = document.getElementById('jobTitle').value.trim();
+          if (jobTitle) {
+            const redSectionY = OUTPUT_SIZE * (1 - RED_SECTION_HEIGHT_RATIO);
+            drawRedSection(previewCtx, redSectionY);
+            drawVacancyBadge(previewCtx, redSectionY);
+            drawJobTitle(previewCtx, redSectionY, jobTitle);
+            drawJobDetails(previewCtx, redSectionY);
+            imageStatus.textContent = 'Preview updated with job details.';
+          } else {
+            imageStatus.textContent = 'Enter a job title to see the vacancy overlay.';
+          }
+
+          downloadImageButton.disabled = false;
+        }
+
+        function loadImageFromFile(file, callback) {
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const img = new Image();
+            img.onload = function () { callback(img); };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+
+        function buildExportCanvas() {
+          const offscreen = document.createElement('canvas');
+          offscreen.width = OUTPUT_SIZE;
+          offscreen.height = OUTPUT_SIZE;
+          const ctx = offscreen.getContext('2d');
+
+          ctx.fillStyle = '#e6e6e6';
+          ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+
+          if (backgroundImage) {
+            const zoom = Number(zoomRange.value);
+            const xOffset = Number(xRange.value) / 100;
+            const yOffset = Number(yRange.value) / 100;
+            const coverScale = Math.max(OUTPUT_SIZE / backgroundImage.width, OUTPUT_SIZE / backgroundImage.height);
+            const scale = coverScale * zoom;
+            const drawWidth = backgroundImage.width * scale;
+            const drawHeight = backgroundImage.height * scale;
+            const maxOffset = OUTPUT_SIZE * 0.5;
+            const drawX = ((OUTPUT_SIZE - drawWidth) / 2) + (xOffset * maxOffset);
+            const drawY = ((OUTPUT_SIZE - drawHeight) / 2) + (yOffset * maxOffset);
+            ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+          }
+
+          const jobTitle = document.getElementById('jobTitle').value.trim();
+          if (jobTitle && svgsLoaded) {
+            const redSectionY = OUTPUT_SIZE * (1 - RED_SECTION_HEIGHT_RATIO);
+            drawRedSection(ctx, redSectionY);
+            drawVacancyBadge(ctx, redSectionY);
+            drawJobTitle(ctx, redSectionY, jobTitle);
+            drawJobDetails(ctx, redSectionY);
+          }
+
+          return offscreen;
+        }
+
+        async function downloadCanvasAsPng() {
+          if (!backgroundImage) {
+            imageStatus.textContent = 'No image available to download.';
+            return;
+          }
+
+          const jobTitleValue = document.getElementById('jobTitle').value.trim();
+          const safeName = (jobTitleValue || 'hr-vacancy')
+            .toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-z0-9-]/g, '');
+          const fileName = safeName + '-1080x1080.png';
+
+          try {
+            const exportCanvas = buildExportCanvas();
+
+            const triggerDownload = function (url, isObjectUrl) {
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              if (isObjectUrl) {
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+              }
+              imageStatus.textContent = '1080 × 1080 image download started.';
+            };
+
+            if (exportCanvas.toBlob) {
+              exportCanvas.toBlob(function (blob) {
+                if (!blob) {
+                  imageStatus.textContent = 'Download failed. Please try again.';
+                  return;
+                }
+                if (window.navigator.msSaveOrOpenBlob) {
+                  window.navigator.msSaveOrOpenBlob(blob, fileName);
+                  imageStatus.textContent = '1080 × 1080 image download started.';
+                  return;
+                }
+                triggerDownload(URL.createObjectURL(blob), true);
+              }, 'image/png');
+            } else {
+              triggerDownload(exportCanvas.toDataURL('image/png'), false);
+            }
+          } catch (error) {
+            console.error(error);
+            imageStatus.textContent = 'Download failed: ' + error.message;
+          }
+        }
+
+        backgroundInput.addEventListener('change', function () {
+          loadImageFromFile(backgroundInput.files[0], function (img) {
+            backgroundImage = img;
+            drawPreview();
+          });
+        });
+
+        [zoomRange, xRange, yRange].forEach(function (control) {
+          control.addEventListener('input', function () {
+            updateSliderLabels();
+            drawPreview();
+          });
+        });
+
+        resetCropButton.addEventListener('click', function () {
+          zoomRange.value = '1';
+          xRange.value = '0';
+          yRange.value = '0';
+          updateSliderLabels();
+          drawPreview();
+        });
+
+        downloadImageButton.addEventListener('click', downloadCanvasAsPng);
+
+        updatePreviewButton.addEventListener('click', function () {
+          drawPreview();
+          detailsStatus.textContent = 'Preview updated with your details.';
+        });
+
+        clearDetailsButton.addEventListener('click', function () {
+          ['jobTitle', 'location', 'employmentType', 'salary', 'closingDate'].forEach(function (id) {
+            document.getElementById(id).value = '';
+          });
+          document.getElementById('jobTitleError').textContent = '';
+          detailsStatus.textContent = 'Fields cleared.';
+          drawPreview();
+        });
+
+        updateSliderLabels();
+        loadSVGs();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>
