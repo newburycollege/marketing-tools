@@ -1,267 +1,85 @@
-(() => {
-  'use strict';
+(function () {
+  function boot() {
+    const fileInput = document.getElementById('vs-file-input');
+    if (!fileInput || fileInput.dataset.initialised === 'true') return;
+    fileInput.dataset.initialised = 'true';
 
-  const MAX_RECOMMENDED_BYTES = 900 * 1024 * 1024;
-  const ALLOWED_EXTENSIONS = ['mp4', 'mov', 'm4v'];
+    const dropZone = document.getElementById('vs-drop-zone');
+    const fileCard = document.getElementById('vs-file-card');
+    const fileName = document.getElementById('vs-file-name');
+    const fileDetails = document.getElementById('vs-file-details');
+    const changeFile = document.getElementById('vs-change-file');
+    const cleanButton = document.getElementById('vs-clean-button');
+    const cancelButton = document.getElementById('vs-cancel-button');
+    const status = document.getElementById('vs-status');
+    const progressWrap = document.getElementById('vs-progress-wrap');
+    const progressTrack = progressWrap.querySelector('[role="progressbar"]');
+    const progressBar = document.getElementById('vs-progress-bar');
+    const progressLabel = document.getElementById('vs-progress-label');
+    const result = document.getElementById('vs-result');
+    const downloadButton = document.getElementById('vs-download-button');
+    const resetButton = document.getElementById('vs-reset-button');
 
-  const fileInput = document.getElementById('vs-file-input');
-  const dropZone = document.getElementById('vs-drop-zone');
-  const fileCard = document.getElementById('vs-file-card');
-  const fileName = document.getElementById('vs-file-name');
-  const fileDetails = document.getElementById('vs-file-details');
-  const changeFile = document.getElementById('vs-change-file');
-  const cleanButton = document.getElementById('vs-clean-button');
-  const cancelButton = document.getElementById('vs-cancel-button');
-  const status = document.getElementById('vs-status');
-  const progressWrap = document.getElementById('vs-progress-wrap');
-  const progressTrack = progressWrap.querySelector('[role="progressbar"]');
-  const progressBar = document.getElementById('vs-progress-bar');
-  const progressLabel = document.getElementById('vs-progress-label');
-  const result = document.getElementById('vs-result');
-  const downloadButton = document.getElementById('vs-download-button');
-  const resetButton = document.getElementById('vs-reset-button');
+    let selectedFile = null, ffmpeg = null, outputBlob = null, outputName = '', cancelled = false;
+    const allowed = ['mp4','mov','m4v'];
 
-  let selectedFile = null;
-  let ffmpeg = null;
-  let outputBlob = null;
-  let outputName = '';
-  let cancelled = false;
+    const ext = n => ((n.toLowerCase().match(/\.([a-z0-9]+)$/) || [,''])[1]);
+    const base = n => n.replace(/\.[^.]+$/, '');
+    function size(n){const u=['B','KB','MB','GB'];let i=0;while(n>=1024&&i<u.length-1){n/=1024;i++}return n.toFixed(i>1?1:0)+' '+u[i]}
+    function stat(t,k='info'){status.textContent=t;status.className='vs-status vs-status--'+k}
+    function prog(n,t){n=Math.max(0,Math.min(100,Math.round(n||0)));progressBar.style.width=n+'%';progressTrack.setAttribute('aria-valuenow',n);progressLabel.textContent=t||n+'%'}
 
-  function formatBytes(bytes) {
-    if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown size';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let value = bytes;
-    let unit = 0;
-    while (value >= 1024 && unit < units.length - 1) {
-      value /= 1024;
-      unit += 1;
-    }
-    return `${value.toFixed(unit > 1 ? 1 : 0)} ${units[unit]}`;
-  }
-
-  function extensionOf(name) {
-    const match = name.toLowerCase().match(/\.([a-z0-9]+)$/);
-    return match ? match[1] : '';
-  }
-
-  function baseNameOf(name) {
-    return name.replace(/\.[^.]+$/, '');
-  }
-
-  function setStatus(message, type = 'info') {
-    status.textContent = message;
-    status.className = `vs-status vs-status--${type}`;
-  }
-
-  function setProgress(value, message) {
-    const safeValue = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
-    progressBar.style.width = `${safeValue}%`;
-    progressTrack.setAttribute('aria-valuenow', String(safeValue));
-    progressLabel.textContent = message || `${safeValue}%`;
-  }
-
-  function revokeOutput() {
-    outputBlob = null;
-    outputName = '';
-  }
-
-  function resetResult() {
-    revokeOutput();
-    result.hidden = true;
-    progressWrap.hidden = true;
-    setProgress(0, 'Preparing…');
-  }
-
-  function chooseFile(file) {
-    resetResult();
-
-    if (!file) return;
-    const ext = extensionOf(file.name);
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
-      selectedFile = null;
-      fileInput.value = '';
-      fileCard.hidden = true;
-      cleanButton.disabled = true;
-      setStatus('Choose an MP4, MOV or M4V file.', 'error');
-      return;
+    function choose(f){
+      result.hidden=true; outputBlob=null; outputName='';
+      if(!f) return;
+      if(!allowed.includes(ext(f.name))){stat('Choose an MP4, MOV or M4V file.','error');return}
+      selectedFile=f; fileName.textContent=f.name; fileDetails.textContent=size(f.size)+' · '+(f.type||'video file');
+      fileCard.hidden=false; cleanButton.disabled=false;
+      stat(f.size>900*1024*1024?'This file is over 900 MB. Browser memory may be insufficient; the PowerShell/FFmpeg method is safer.':'Ready. The original file will not be changed.', f.size>900*1024*1024?'working':'info');
     }
 
-    selectedFile = file;
-    fileName.textContent = file.name;
-    fileDetails.textContent = `${formatBytes(file.size)} · ${file.type || 'video file'}`;
-    fileCard.hidden = false;
-    cleanButton.disabled = false;
-
-    if (file.size > MAX_RECOMMENDED_BYTES) {
-      setStatus('This file is larger than 900 MB. Browser processing may run out of memory. Close other tabs before continuing, or use the PowerShell/FFmpeg method for the most reliable result.', 'working');
-    } else {
-      setStatus('Ready. The original file will not be changed.', 'info');
-    }
-  }
-
-  async function loadFFmpeg() {
-    if (ffmpeg) return ffmpeg;
-
-    if (!window.FFmpegWASM || !window.FFmpegUtil) {
-      throw new Error('The FFmpeg browser library could not be loaded. Check the internet connection or ask the site administrator to host the FFmpeg files locally.');
+    async function engine(){
+      if(ffmpeg) return ffmpeg;
+      if(!window.FFmpegWASM||!window.FFmpegUtil) throw new Error('FFmpeg browser libraries did not load.');
+      const f=new window.FFmpegWASM.FFmpeg();
+      const toBlobURL=window.FFmpegUtil.toBlobURL;
+      const core='https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
+      f.on('progress',e=>{if(Number.isFinite(e.progress))prog(e.progress*100,'Processing… '+Math.round(e.progress*100)+'%')});
+      stat('Loading the video-processing engine (about 31 MB on first use)…','working');
+      progressWrap.hidden=false; prog(2,'Loading processing engine…');
+      await f.load({coreURL:await toBlobURL(core+'/ffmpeg-core.js','text/javascript'),wasmURL:await toBlobURL(core+'/ffmpeg-core.wasm','application/wasm')});
+      ffmpeg=f; return f;
     }
 
-    const { FFmpeg } = window.FFmpegWASM;
-    const { toBlobURL } = window.FFmpegUtil;
-    const instance = new FFmpeg();
-    const coreBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd';
-
-    instance.on('progress', ({ progress }) => {
-      if (Number.isFinite(progress)) {
-        setProgress(progress * 100, `Processing… ${Math.round(progress * 100)}%`);
-      }
-    });
-
-    setStatus('Loading the local video-processing engine (about 31 MB on first use)…', 'working');
-    setProgress(2, 'Loading processing engine…');
-
-    await instance.load({
-      coreURL: await toBlobURL(`${coreBase}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${coreBase}/ffmpeg-core.wasm`, 'application/wasm')
-    });
-
-    ffmpeg = instance;
-    return ffmpeg;
-  }
-
-  async function cleanVideo() {
-    if (!selectedFile) return;
-
-    cancelled = false;
-    cleanButton.disabled = true;
-    changeFile.disabled = true;
-    cancelButton.hidden = false;
-    result.hidden = true;
-    progressWrap.hidden = false;
-    setProgress(0, 'Preparing…');
-
-    const inputExt = extensionOf(selectedFile.name);
-    const inputVirtualName = `input.${inputExt}`;
-    const outputExt = inputExt === 'mov' ? 'mov' : 'mp4';
-    const outputVirtualName = `output.${outputExt}`;
-    outputName = `${baseNameOf(selectedFile.name)}-CLEAN.${outputExt}`;
-
-    try {
-      const processor = await loadFFmpeg();
-      if (cancelled) throw new Error('Processing cancelled.');
-
-      setStatus('Reading the selected video into the browser…', 'working');
-      setProgress(5, 'Reading source video…');
-      const inputBytes = new Uint8Array(await selectedFile.arrayBuffer());
-      if (cancelled) throw new Error('Processing cancelled.');
-
-      await processor.writeFile(inputVirtualName, inputBytes);
-      setStatus('Rebuilding the video container without inherited metadata. Video and audio are not being re-encoded.', 'working');
-      setProgress(10, 'Remuxing video…');
-
-      const exitCode = await processor.exec([
-        '-i', inputVirtualName,
-        '-map', '0:v?',
-        '-map', '0:a?',
-        '-map', '0:s?',
-        '-map_metadata', '-1',
-        '-map_chapters', '-1',
-        '-c', 'copy',
-        '-movflags', '+faststart',
-        outputVirtualName
-      ]);
-
-      if (cancelled) throw new Error('Processing cancelled.');
-      if (exitCode !== 0) throw new Error(`FFmpeg finished with error code ${exitCode}.`);
-
-      setProgress(95, 'Preparing download…');
-      const outputData = await processor.readFile(outputVirtualName);
-      outputBlob = new Blob([outputData.buffer], {
-        type: outputExt === 'mov' ? 'video/quicktime' : 'video/mp4'
-      });
-
-      await processor.deleteFile(inputVirtualName).catch(() => {});
-      await processor.deleteFile(outputVirtualName).catch(() => {});
-
-      setProgress(100, 'Complete');
-      setStatus(`Clean copy created: ${outputName}\nDownload it before leaving this page.`, 'success');
-      result.hidden = false;
-    } catch (error) {
-      if (String(error && error.message).includes('cancelled')) {
-        setStatus('Processing cancelled. The original video was not changed.', 'info');
-      } else {
-        console.error(error);
-        setStatus(`Video Stripper could not process this file. ${error && error.message ? error.message : 'The browser may have run out of memory.'}\n\nFor a large 4K file, use the PowerShell/FFmpeg method instead.`, 'error');
-      }
-    } finally {
-      cleanButton.disabled = !selectedFile;
-      changeFile.disabled = false;
-      cancelButton.hidden = true;
+    async function clean(){
+      if(!selectedFile)return; cancelled=false; cleanButton.disabled=true; changeFile.disabled=true; cancelButton.hidden=false; result.hidden=true; progressWrap.hidden=false; prog(0,'Preparing…');
+      const ie=ext(selectedFile.name), oe=ie==='mov'?'mov':'mp4', input='input.'+ie, output='output.'+oe; outputName=base(selectedFile.name)+'-CLEAN.'+oe;
+      try{
+        const f=await engine(); if(cancelled)throw new Error('cancelled'); stat('Reading the selected video into the browser…','working');
+        await f.writeFile(input,new Uint8Array(await selectedFile.arrayBuffer())); if(cancelled)throw new Error('cancelled');
+        stat('Rebuilding the container without inherited metadata. Video and audio are not being re-encoded.','working');
+        const code=await f.exec(['-i',input,'-map','0:v?','-map','0:a?','-map','0:s?','-map_metadata','-1','-map_chapters','-1','-c','copy','-movflags','+faststart',output]);
+        if(code!==0)throw new Error('FFmpeg exited with code '+code);
+        const data=await f.readFile(output); outputBlob=new Blob([data.buffer],{type:oe==='mov'?'video/quicktime':'video/mp4'});
+        await f.deleteFile(input).catch(()=>{}); await f.deleteFile(output).catch(()=>{}); prog(100,'Complete'); stat('Clean copy created: '+outputName,'success'); result.hidden=false;
+      }catch(e){stat(cancelled?'Processing cancelled. The original was not changed.':'Could not process this file: '+(e.message||e),'error')}
+      finally{cleanButton.disabled=!selectedFile;changeFile.disabled=false;cancelButton.hidden=true}
     }
+
+    fileInput.addEventListener('change',()=>choose(fileInput.files[0]));
+    changeFile.addEventListener('click',()=>fileInput.click()); cleanButton.addEventListener('click',clean);
+    cancelButton.addEventListener('click',()=>{cancelled=true;if(ffmpeg){try{ffmpeg.terminate()}catch(e){}ffmpeg=null}stat('Cancelling…','working')});
+    downloadButton.addEventListener('click',()=>{if(!outputBlob)return;const u=URL.createObjectURL(outputBlob),a=document.createElement('a');a.href=u;a.download=outputName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)});
+    resetButton.addEventListener('click',()=>{selectedFile=null;fileInput.value='';fileCard.hidden=true;cleanButton.disabled=true;result.hidden=true;progressWrap.hidden=true;stat('Select one video to begin.')});
+
+    const stop=e=>{e.preventDefault();e.stopPropagation()};
+    ['dragenter','dragover'].forEach(n=>dropZone.addEventListener(n,e=>{stop(e);dropZone.classList.add('is-dragging')}));
+    ['dragleave','drop'].forEach(n=>dropZone.addEventListener(n,e=>{stop(e);dropZone.classList.remove('is-dragging')}));
+    dropZone.addEventListener('drop',e=>choose(e.dataTransfer&&e.dataTransfer.files?e.dataTransfer.files[0]:null));
+    dropZone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click()}});
   }
 
-  function cancelProcessing() {
-    cancelled = true;
-    if (ffmpeg) {
-      try { ffmpeg.terminate(); } catch (_) {}
-      ffmpeg = null;
-    }
-    setStatus('Cancelling…', 'working');
-  }
-
-  function downloadOutput() {
-    if (!outputBlob || !outputName) return;
-    const url = URL.createObjectURL(outputBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = outputName;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 30000);
-  }
-
-  function resetAll() {
-    selectedFile = null;
-    fileInput.value = '';
-    fileCard.hidden = true;
-    cleanButton.disabled = true;
-    resetResult();
-    setStatus('Select one video to begin.', 'info');
-  }
-
-  fileInput.addEventListener('change', () => chooseFile(fileInput.files[0]));
-  changeFile.addEventListener('click', () => fileInput.click());
-  cleanButton.addEventListener('click', cleanVideo);
-  cancelButton.addEventListener('click', cancelProcessing);
-  downloadButton.addEventListener('click', downloadOutput);
-  resetButton.addEventListener('click', resetAll);
-
-  dropZone.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      fileInput.click();
-    }
-  });
-
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, event => {
-      event.preventDefault();
-      dropZone.classList.add('is-dragging');
-    });
-  });
-
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, event => {
-      event.preventDefault();
-      dropZone.classList.remove('is-dragging');
-    });
-  });
-
-  dropZone.addEventListener('drop', event => {
-    const file = event.dataTransfer && event.dataTransfer.files
-      ? event.dataTransfer.files[0]
-      : null;
-    chooseFile(file);
-  });
+  document.addEventListener('app-shell-ready', boot);
+  document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
+  setTimeout(boot, 250);
 })();
