@@ -1,0 +1,89 @@
+(function () {
+  const navItems = [
+    { key: 'home', title: 'Home', href: 'index.html', icon: 'fa-home', prefix: 'fas' },
+    { key: 'qr', title: 'QR Code Generator', href: 'qr.html', icon: 'fa-qrcode', prefix: 'fas' },
+    { key: 'resize', title: 'Image Resizer', href: 'resize.html', icon: 'fa-images', prefix: 'fas' },
+    { key: 'video-stripper', title: 'Video Stripper', href: 'video-stripper.html', icon: 'fa-film', prefix: 'fas' },
+    { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', icon: 'fa-bullhorn', prefix: 'fas' },
+    { key: 'vacancy-builder', title: 'Apprenticeship Vacancy Builder', href: 'vacancy-post-builder.html', icon: 'fa-bolt', prefix: 'fas' },
+    { key: 'hr-vacancy-builder', title: 'HR Vacancy Builder', href: 'hr-vacancy-builder.html', icon: 'fa-briefcase', prefix: 'fas' },
+    { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-person-shelter', prefix: 'fas' }
+  ];
+
+  const externalItems = [
+    { title: 'Constant Contact', href: 'https://newburycollege.marketingautomation.services/', icon: 'fa-envelopes-bulk', prefix: 'fas', external: true },
+    { title: 'Flare CMS', href: 'https://flare-cms.pixelnebula.com/login', icon: 'fa-tv', prefix: 'fas', external: true },
+    { title: 'Short.io', href: 'https://app.short.io', icon: 'fa-link', prefix: 'fas', external: true },
+    { title: 'Website Admin', href: 'https://www.newbury-college.ac.uk/administrator', icon: 'fa-joomla', prefix: 'fab', external: true }
+  ];
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function buildNavigation(currentKey) {
+    return navItems.map(function (item) {
+      const current = item.key === currentKey ? ' aria-current="page"' : '';
+      const prefix = item.prefix || 'fas';
+      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '" aria-hidden="true"></i>' : '';
+      return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + current + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
+    }).join('');
+  }
+
+  function buildExternalLinks() {
+    return externalItems.map(function (item) {
+      const prefix = item.prefix || 'fas';
+      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '" aria-hidden="true"></i>' : '';
+      const target = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
+      return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + target + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
+    }).join('');
+  }
+
+  function getCurrentItem(currentKey) {
+    return navItems.find(function (item) { return item.key === currentKey; }) || null;
+  }
+
+  function buildBreadcrumbs(currentKey) {
+    if (!currentKey || currentKey === 'home') return '';
+    const currentItem = getCurrentItem(currentKey);
+    if (!currentItem) return '';
+    return '<nav class="app-breadcrumbs" aria-label="Breadcrumb"><ol class="app-breadcrumbs__list"><li class="app-breadcrumbs__item"><a href="index.html">Home</a></li><li class="app-breadcrumbs__item"><span class="app-breadcrumbs__current">' + escapeHtml(currentItem.title) + '</span></li></ol></nav>';
+  }
+
+  function createShell(pageContentHtml) {
+    const body = document.body;
+    const title = body.dataset.appTitle || document.title || 'Toolkit page';
+    const intro = body.dataset.appIntro || '';
+    const currentKey = body.dataset.appKey || '';
+
+    return '<div class="app-shell">' +
+      '<header class="app-header"><div class="app-header__inner">' +
+      '<a class="app-header__brand" href="index.html" aria-label="Marketing Tools home">' +
+      '<img class="app-header__logo" src="img/logo_dual.png" alt="Newbury College logo">' +
+      '<span class="app-header__brand-text">Marketing Tools</span></a>' +
+      '<div class="app-header__meta"><a class="app-header__utility-link" href="https://livenewburycollegeac.sharepoint.com/sites/marketinghub">Return to SharePoint</a></div>' +
+      '</div></header>' +
+      '<div class="app-layout">' +
+      '<aside class="app-sidebar" aria-label="Toolkit navigation"><div class="app-sidebar__header"><h2 class="app-sidebar__title">Toolkit</h2><p class="app-sidebar__hint">Choose a tool to continue.</p></div><nav class="app-nav"><ul class="app-nav__list">' + buildNavigation(currentKey) + '</ul></nav><div class="app-sidebar__section"><h3 class="app-sidebar__section-title">External Platforms</h3><nav class="app-nav"><ul class="app-nav__list">' + buildExternalLinks() + '</ul></nav></div></aside>' +
+      '<main class="app-main"><section class="app-page"><header class="app-page__header">' + buildBreadcrumbs(currentKey) + '<h1 class="app-page__title">' + escapeHtml(title) + '</h1>' + (intro ? '<p class="app-page__intro">' + escapeHtml(intro) + '</p>' : '') + '</header><div class="app-page__body" id="app-page-body">' + pageContentHtml + '</div></section></main>' +
+      '</div>' +
+      '<footer class="app-footer">Created by <a href="mailto:s-daubney@newbury-college.ac.uk">Shaun Daubney</a></footer>' +
+      '</div>';
+  }
+
+  function initAppShell() {
+    const shellRoot = document.getElementById('app-shell');
+    const pageTemplate = document.getElementById('app-page-content');
+    if (!shellRoot || !pageTemplate) return;
+    shellRoot.innerHTML = createShell(pageTemplate.innerHTML);
+    document.dispatchEvent(new CustomEvent('app-shell-ready'));
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAppShell);
+  else initAppShell();
+})();

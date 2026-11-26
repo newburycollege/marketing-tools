@@ -1,24 +1,20 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <title>Video Stripper</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Create a clean delivery copy of an MP4 or MOV without re-encoding its video or audio.">
-  <title>Video Stripper | Marketing Tools</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css">
   <link rel="stylesheet" href="css/gds-theme.css">
   <link rel="stylesheet" href="css/video-stripper.css">
 </head>
-<body
-  data-app-key="video-stripper"
-  data-app-title="Video Stripper"
-  data-app-intro="Create a clean delivery copy of an MP4 or MOV with inherited metadata and Content Credentials removed."
->
+<body data-app-key="video-stripper" data-app-title="Video Stripper" data-app-intro="Create a clean delivery copy of an MP4 or MOV with inherited metadata and Content Credentials removed.">
   <div id="app-shell"></div>
 
   <template id="app-page-content">
-    <div class="vs-warning" role="note">
-      <strong>Your video stays on this device.</strong>
-      Processing happens locally in the browser. The video is not uploaded to Newbury College, GitHub or a third-party server.
+    <div class="app-note">
+      <strong>Your video stays on this device.</strong> Processing happens locally in the browser. The video is not uploaded to Newbury College, GitHub or another server.
     </div>
 
     <section class="vs-panel" aria-labelledby="vs-heading">
@@ -44,9 +40,7 @@
         <button id="vs-cancel-button" class="gds-button gds-button--secondary" type="button" hidden>Cancel</button>
       </div>
 
-      <div id="vs-status" class="vs-status vs-status--info" aria-live="polite">
-        Select one video to begin.
-      </div>
+      <div id="vs-status" class="vs-status vs-status--info" aria-live="polite">Select one video to begin.</div>
 
       <div id="vs-progress-wrap" class="vs-progress" hidden>
         <div class="vs-progress__track" role="progressbar" aria-label="Processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">

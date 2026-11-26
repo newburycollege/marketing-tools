@@ -1,0 +1,91 @@
+.vs-panel,
+.vs-result,
+.vs-details { max-width: 860px; }
+
+.vs-panel {
+  background: #fff;
+  border: 1px solid #d6dbe1;
+  border-radius: 6px;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.vs-panel h2,
+.vs-result h3 { margin-top: 0; }
+
+.vs-drop-zone {
+  display: grid;
+  place-items: center;
+  min-height: 210px;
+  padding: 2rem;
+  border: 3px dashed #7b8794;
+  border-radius: 8px;
+  background: #fafbfc;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, background-color .15s;
+}
+
+.vs-drop-zone:hover,
+.vs-drop-zone:focus,
+.vs-drop-zone.is-dragging {
+  border-color: var(--gds-primary, #ee3a4e);
+  background: #fff4f5;
+  outline: 3px solid transparent;
+}
+
+.vs-drop-zone__title,
+.vs-drop-zone__help { display: block; }
+.vs-drop-zone__title { font-size: 1.25rem; font-weight: 700; }
+.vs-drop-zone__help { margin-top: .5rem; color: #4a5560; }
+
+#vs-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.vs-file-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #ccd3da;
+  border-radius: 6px;
+  background: #f7f8fa;
+}
+
+.vs-file-card strong,
+.vs-file-card span { display: block; overflow-wrap: anywhere; }
+.vs-label { margin-bottom: .25rem; color: #56636f; font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+#vs-file-details { margin-top: .3rem; color: #56636f; }
+.vs-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+
+.vs-status { margin-top: 1rem; padding: .9rem 1rem; border-radius: 4px; white-space: pre-wrap; }
+.vs-status--info { background: #eaf3fb; color: #17324d; }
+.vs-status--working { background: #fff3cd; color: #5d4500; }
+.vs-status--success { background: #e5f4e9; color: #145a2b; }
+.vs-status--error { background: #fde7e9; color: #8a111d; }
+
+.vs-progress { margin-top: 1rem; }
+.vs-progress__track { height: 14px; overflow: hidden; border-radius: 999px; background: #dce2e8; }
+.vs-progress__bar { width: 0; height: 100%; background: var(--gds-primary, #ee3a4e); transition: width .2s ease; }
+#vs-progress-label { display: block; margin-top: .4rem; color: #44515d; }
+
+.vs-result { margin-top: 1.25rem; padding: 1.25rem; border: 2px solid #2f7d45; border-radius: 6px; background: #f3fbf5; }
+.vs-result .gds-button { margin: .5rem .5rem 0 0; }
+.vs-details { margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid #ccd3da; border-radius: 6px; background: #fff; }
+.vs-details summary { cursor: pointer; font-weight: 700; }
+.vs-details code { overflow-wrap: anywhere; }
+
+@media (max-width: 640px) {
+  .vs-file-card { align-items: stretch; flex-direction: column; }
+  .vs-actions,
+  .vs-actions .gds-button,
+  .vs-result .gds-button { width: 100%; }
+}
