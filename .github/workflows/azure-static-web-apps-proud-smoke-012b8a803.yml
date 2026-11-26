@@ -25,7 +25,7 @@ jobs:
           node-version: 24
 
       - name: Install FFmpeg browser packages
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Build Marketing Tools
         run: npm run test:metadata && npm run build:pages && npm run validate
