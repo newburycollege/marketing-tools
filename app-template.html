@@ -5,9 +5,17 @@
   <title>New tool name</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="css/gds-theme.css" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
 </head>
 <body data-app-key="new-tool" data-app-title="New tool name" data-app-intro="Describe what this tool does in one sentence.">
-  <div id="app-shell"></div>
+  <div id="app-shell"><p class="app-note">Loading Marketing Tools… If this message persists, refresh the page or contact Marketing.</p></div><noscript><p>This toolkit requires JavaScript to run.</p></noscript>
 
   <template id="app-page-content">
     <section class="app-card">
@@ -16,9 +24,8 @@
     </section>
   </template>
 
+  <script src="js/shared-utils.js"></script>
   <script src="js/gds-shell.js"></script>
-  <script>
-    // Add any page-specific JavaScript here.
-  </script>
+  
 </body>
 </html>

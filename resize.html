@@ -4,12 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Marketing image resizer</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <link rel="stylesheet" href="css/gds-theme.css" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
 </head>
 <body data-app-key="resize" data-app-title="Marketing image resizer" data-app-intro="Upload one image and generate every required marketing size.">
-  <div id="app-shell"></div>
+  <div id="app-shell"><p class="app-note">Loading Marketing Tools… If this message persists, refresh the page or contact Marketing.</p></div><noscript><p>This toolkit requires JavaScript to run.</p></noscript>
 
   <template id="app-page-content">
     <form id="uploadForm" class="app-form">
@@ -27,10 +33,11 @@
       </div>
 
       <div class="app-button-row">
-        <button type="submit">Upload and resize all</button>
+        <button type="submit">Resize all</button>
       </div>
     </form>
 
+    <p id="resizeStatus" class="status-text" role="status"></p>
     <section id="resultsContainer" class="app-results" aria-labelledby="results-title">
       <table id="resultsTable">
         <thead>
@@ -47,158 +54,13 @@
     </section>
 
     <div class="app-actions">
-      <button id="zipButton" type="button">Download all as ZIP</button>
+      <button id="zipButton" type="button" disabled>Download all as ZIP</button>
     </div>
   </template>
 
+  <script src="vendor/jszip/jszip.min.js"></script>
+  <script src="js/shared-utils.js"></script>
   <script src="js/gds-shell.js"></script>
-  <script>
-    const SIZES = [
-      { shortName: "email_cover", displayName: "Email Cover (800px x 400px)", width: 800, height: 400, aspectRatio: 2 / 1 },
-      { shortName: "email_220", displayName: "Email 220 (220px x 165px)", width: 220, height: 165, aspectRatio: 4 / 3 },
-      { shortName: "email_240", displayName: "Email 240 (240px x 180px)", width: 240, height: 180, aspectRatio: 4 / 3 },
-      { shortName: "email_330", displayName: "Email 330 (330px x 248px)", width: 330, height: 248, aspectRatio: 4 / 3 },
-      { shortName: "website", displayName: "Website News (800px x 600px)", width: 800, height: 600, aspectRatio: 4 / 3 },
-      { shortName: "website_contact_profile", displayName: "Website Contact Profile (300px x 265px)", width: 300, height: 265, aspectRatio: 1.13 },
-      { shortName: "website_case_study", displayName: "Website Case Study (512px x 512px)", width: 512, height: 512, aspectRatio: 1 },
-      { shortName: "press", displayName: "Press (Max 4000px wide)", maxWidth: 4000 }
-    ];
-
-    const JPEG_QUALITY = 0.9;
-
-    document.addEventListener("DOMContentLoaded", function () {
-      function resizeImageBoundingBox(img, width, height, aspectRatio, jpegQuality) {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = width;
-        canvas.height = height;
-        const imgAspect = img.width / img.height;
-        let drawWidth;
-        let drawHeight;
-
-        if (imgAspect > aspectRatio) {
-          drawHeight = height;
-          drawWidth = height * imgAspect;
-        } else {
-          drawWidth = width;
-          drawHeight = width / imgAspect;
-        }
-
-        ctx.drawImage(img, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
-        ctx.imageSmoothingQuality = "high";
-        return canvas.toDataURL("image/jpeg", jpegQuality);
-      }
-
-      function resizeImageMaxWidth(img, maxWidth, jpegQuality) {
-        if (img.width <= maxWidth) {
-          return convertImageToDataURL(img, jpegQuality);
-        }
-
-        const scaleFactor = maxWidth / img.width;
-        const newWidth = maxWidth;
-        const newHeight = Math.round(img.height * scaleFactor);
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = newWidth;
-        canvas.height = newHeight;
-        ctx.imageSmoothingQuality = "high";
-        ctx.drawImage(img, 0, 0, newWidth, newHeight);
-        return canvas.toDataURL("image/jpeg", jpegQuality);
-      }
-
-      function convertImageToDataURL(img, jpegQuality) {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        ctx.imageSmoothingQuality = "high";
-        return canvas.toDataURL("image/jpeg", jpegQuality);
-      }
-
-      function formatBytesToKB(bytes) {
-        return (bytes / 1024).toFixed(2) + " KB";
-      }
-
-      document.getElementById("uploadForm").addEventListener("submit", function (event) {
-        event.preventDefault();
-        const file = document.getElementById("imageInput").files[0];
-        const fileName = document.getElementById("fileName").value.trim().replace(/\s+/g, "_");
-
-        if (!file || !fileName) {
-          alert("Please select an image and enter a file name.");
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          const tbody = document.getElementById("resultsTbody");
-          tbody.innerHTML = "";
-          document.getElementById("zipButton").style.display = "none";
-
-          const img = new Image();
-          img.src = e.target.result;
-          img.onload = async function () {
-            const zip = new JSZip();
-            let anyImagesCreated = false;
-
-            for (const sizeInfo of SIZES) {
-              try {
-                let resizedDataUrl = "";
-                if (sizeInfo.shortName === "press" && sizeInfo.maxWidth) {
-                  resizedDataUrl = resizeImageMaxWidth(img, sizeInfo.maxWidth, JPEG_QUALITY);
-                } else {
-                  resizedDataUrl = resizeImageBoundingBox(img, sizeInfo.width, sizeInfo.height, sizeInfo.aspectRatio || 1, JPEG_QUALITY);
-                }
-
-                const res = await fetch(resizedDataUrl);
-                const blob = await res.blob();
-                const arrayBuffer = await blob.arrayBuffer();
-                const finalFileName = `${fileName}_${sizeInfo.shortName}.jpg`;
-                const fileSizeStr = formatBytesToKB(blob.size);
-
-                const tr = document.createElement("tr");
-                const tdImage = document.createElement("td");
-                tdImage.innerHTML = `<img src="${resizedDataUrl}" class="results-image-preview" alt="Preview of ${sizeInfo.displayName}" />`;
-                tr.appendChild(tdImage);
-
-                const tdDescription = document.createElement("td");
-                tdDescription.textContent = sizeInfo.displayName;
-                tr.appendChild(tdDescription);
-
-                const tdFileName = document.createElement("td");
-                tdFileName.textContent = finalFileName;
-                tr.appendChild(tdFileName);
-
-                const tdFileSize = document.createElement("td");
-                tdFileSize.textContent = fileSizeStr;
-                tr.appendChild(tdFileSize);
-
-                const tdDownload = document.createElement("td");
-                tdDownload.innerHTML = `<a class="downloadLink" href="${resizedDataUrl}" download="${finalFileName}">Download</a>`;
-                tr.appendChild(tdDownload);
-
-                tbody.appendChild(tr);
-                zip.file(finalFileName, arrayBuffer);
-                anyImagesCreated = true;
-              } catch (error) {
-                console.error(`Failed processing ${sizeInfo.shortName}:`, error);
-              }
-            }
-
-            if (anyImagesCreated) {
-              document.getElementById("zipButton").style.display = "inline-flex";
-              document.getElementById("zipButton").onclick = async function () {
-                const content = await zip.generateAsync({ type: "blob" });
-                saveAs(content, `${fileName}_resized_images.zip`);
-              };
-            }
-          };
-        };
-
-        reader.readAsDataURL(file);
-      });
-    });
-  </script>
+  <script src="js/resize.js"></script>
 </body>
 </html>

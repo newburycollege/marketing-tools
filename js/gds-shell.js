@@ -3,9 +3,11 @@
     { key: 'home', title: 'Home', href: 'index.html', icon: 'fa-home', prefix: 'fas' },
     { key: 'qr', title: 'QR Code Generator', href: 'qr.html', icon: 'fa-qrcode', prefix: 'fas' },
     { key: 'resize', title: 'Image Resizer', href: 'resize.html', icon: 'fa-images', prefix: 'fas' },
+    { key: 'media-stripper', title: 'Media Stripper', href: 'media-stripper.html', icon: 'fa-photo-film', prefix: 'fas' },
     { key: 'utm', title: 'UTM Link Builder', href: 'utm-builder.html', icon: 'fa-bullhorn', prefix: 'fas' },
     { key: 'vacancy-builder', title: 'Apprenticeship Vacancy Builder', href: 'vacancy-post-builder.html', icon: 'fa-bolt', prefix: 'fas' },
     { key: 'hr-vacancy-builder', title: 'HR Vacancy Builder', href: 'hr-vacancy-builder.html', icon: 'fa-briefcase', prefix: 'fas' },
+    { key: 'prompt-builder', title: 'AI Prompt Builder', href: 'prompt-builder.html', icon: 'fa-wand-magic-sparkles', prefix: 'fas' },
     { key: 'room-hire', title: 'Room Hire Email Generator', href: 'room-hire-generator.html', icon: 'fa-person-shelter', prefix: 'fas' }
   ];
 
@@ -22,14 +24,14 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/'/g, '&#039;');
   }
 
   function buildNavigation(currentKey) {
     return navItems.map(function (item) {
       const current = item.key === currentKey ? ' aria-current="page"' : '';
       const prefix = item.prefix || 'fas';
-      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '"></i>' : '';
+      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '" aria-hidden="true"></i>' : '';
       return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + current + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
     }).join('');
   }
@@ -37,7 +39,7 @@
   function buildExternalLinks() {
     return externalItems.map(function (item) {
       const prefix = item.prefix || 'fas';
-      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '"></i>' : '';
+      const icon = item.icon ? '<i class="app-nav__icon ' + prefix + ' ' + item.icon + '" aria-hidden="true"></i>' : '';
       const target = item.external ? ' target="_blank" rel="noopener noreferrer"' : '';
       return '<li class="app-nav__item"><a class="app-nav__link" href="' + escapeHtml(item.href) + '"' + target + '>' + icon + '<span>' + escapeHtml(item.title) + '</span></a></li>';
     }).join('');
@@ -60,7 +62,7 @@
     const intro = body.dataset.appIntro || '';
     const currentKey = body.dataset.appKey || '';
 
-    return '<div class="app-shell">' +
+    return '<a class="skip-link" href="#main-content">Skip to main content</a><div class="app-shell">' +
       '<header class="app-header"><div class="app-header__inner">' +
       '<a class="app-header__brand" href="index.html" aria-label="Marketing Tools home">' +
       '<img class="app-header__logo" src="img/logo_dual.png" alt="Newbury College logo">' +
@@ -68,8 +70,8 @@
       '<div class="app-header__meta"><a class="app-header__utility-link" href="https://livenewburycollegeac.sharepoint.com/sites/marketinghub">Return to SharePoint</a></div>' +
       '</div></header>' +
       '<div class="app-layout">' +
-      '<aside class="app-sidebar" aria-label="Toolkit navigation"><div class="app-sidebar__header"><h2 class="app-sidebar__title">Toolkit</h2><p class="app-sidebar__hint">Choose a tool to continue.</p></div><nav class="app-nav"><ul class="app-nav__list">' + buildNavigation(currentKey) + '</ul></nav><div class="app-sidebar__section"><h3 class="app-sidebar__section-title">External Platforms</h3><nav class="app-nav"><ul class="app-nav__list">' + buildExternalLinks() + '</ul></nav></div></aside>' +
-      '<main class="app-main"><section class="app-page"><header class="app-page__header">' + buildBreadcrumbs(currentKey) + '<h1 class="app-page__title">' + escapeHtml(title) + '</h1>' + (intro ? '<p class="app-page__intro">' + escapeHtml(intro) + '</p>' : '') + '</header><div class="app-page__body" id="app-page-body">' + pageContentHtml + '</div></section></main>' +
+      '<aside class="app-sidebar" aria-label="Toolkit navigation"><div class="app-sidebar__header"><h2 class="app-sidebar__title">Toolkit</h2><p class="app-sidebar__hint">Choose a tool to continue.</p></div><button type="button" class="mobile-nav-toggle btn-secondary" aria-expanded="false" aria-controls="toolkit-menu">Show navigation</button><div id="toolkit-menu" class="toolkit-menu"><nav class="app-nav" aria-label="Tools"><ul class="app-nav__list">' + buildNavigation(currentKey) + '</ul></nav><div class="app-sidebar__section"><h3 class="app-sidebar__section-title">External Platforms</h3><nav class="app-nav" aria-label="External platforms"><ul class="app-nav__list">' + buildExternalLinks() + '</ul></nav></div></div></aside>' +
+      '<main class="app-main" id="main-content" tabindex="-1"><section class="app-page"><header class="app-page__header">' + buildBreadcrumbs(currentKey) + '<h1 class="app-page__title">' + escapeHtml(title) + '</h1>' + (intro ? '<p class="app-page__intro">' + escapeHtml(intro) + '</p>' : '') + '</header><div class="app-page__body" id="app-page-body">' + pageContentHtml + '</div></section></main>' +
       '</div>' +
       '<footer class="app-footer">Created by <a href="mailto:s-daubney@newbury-college.ac.uk">Shaun Daubney</a></footer>' +
       '</div>';
@@ -80,6 +82,9 @@
     const pageTemplate = document.getElementById('app-page-content');
     if (!shellRoot || !pageTemplate) return;
     shellRoot.innerHTML = createShell(pageTemplate.innerHTML);
+    const toggle = shellRoot.querySelector('.mobile-nav-toggle');
+    if (toggle) toggle.addEventListener('click', () => { const open = toggle.getAttribute('aria-expanded') !== 'true'; toggle.setAttribute('aria-expanded', String(open)); toggle.textContent = open ? 'Hide navigation' : 'Show navigation'; });
+    document.dispatchEvent(new CustomEvent('app-shell-ready'));
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAppShell);

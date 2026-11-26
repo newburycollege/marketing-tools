@@ -186,3 +186,11 @@
     width: 100%;
   }
 }
+
+.vs-drop-zone:focus-within {outline:3px solid var(--gds-focus);outline-offset:2px;}
+.vs-drop-zone[aria-disabled="true"] {cursor:not-allowed;opacity:.65;}
+.vs-indeterminate {opacity:.6;animation:vs-pulse 1.4s ease-in-out infinite alternate;}
+@keyframes vs-pulse {from {opacity:.35;} to {opacity:1;}}
+.vs-result-item {border-top:1px solid var(--gds-border-light); padding:1rem 0; overflow-wrap:anywhere;}
+.vs-result-item h4 {margin:0 0 .4rem;}
+.vs-result-item p {margin:.4rem 0;}

@@ -5,9 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UTM link builder</title>
   <link rel="stylesheet" href="css/gds-theme.css" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
 </head>
 <body data-app-key="utm" data-app-title="UTM link builder" data-app-intro="Create clean tracked links for campaigns, emails, social posts, QR codes and other marketing activity.">
-  <div id="app-shell"></div>
+  <div id="app-shell"><p class="app-note">Loading Marketing Tools… If this message persists, refresh the page or contact Marketing.</p></div><noscript><p>This toolkit requires JavaScript to run.</p></noscript>
 
   <template id="app-page-content">
     <section class="app-form" aria-labelledby="utm-form-title">
@@ -94,132 +102,12 @@
         <textarea id="utmResult" class="app-textarea" rows="4" readonly></textarea>
       </div>
 
-      <div class="app-note" id="utmSummary">Complete the form above to generate a tracked link.</div>
+      <div class="app-note" id="utmSummary" role="status">Complete the form above to generate a tracked link.</div>
     </section>
   </template>
 
+  <script src="js/shared-utils.js"></script>
   <script src="js/gds-shell.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const form = document.getElementById('utmForm');
-      const copyButton = document.getElementById('copyButton');
-      const clearButton = document.getElementById('clearButton');
-      const resultField = document.getElementById('utmResult');
-      const summary = document.getElementById('utmSummary');
-
-      const requiredFields = [
-        { id: 'baseUrl', errorId: 'baseUrlError', label: 'destination URL' },
-        { id: 'source', errorId: 'sourceError', label: 'utm_source' },
-        { id: 'medium', errorId: 'mediumError', label: 'utm_medium' },
-        { id: 'campaign', errorId: 'campaignError', label: 'utm_campaign' }
-      ];
-
-      function cleanValue(value, style, removePunctuation) {
-        let output = value.trim();
-        if (!output) return '';
-        if (removePunctuation === 'yes') {
-          output = output.replace(/[’'".,:;!?()\[\]{}\/\&]+/g, ' ');
-        }
-        output = output.replace(/\s+/g, ' ').trim();
-        if (style === 'hyphen-lower') {
-          output = output.toLowerCase().replace(/\s+/g, '-');
-        } else if (style === 'underscore-lower') {
-          output = output.toLowerCase().replace(/\s+/g, '_');
-        }
-        return output;
-      }
-
-      function setError(fieldId, errorId, message) {
-        const field = document.getElementById(fieldId);
-        const error = document.getElementById(errorId);
-        field.classList.toggle('error-input', Boolean(message));
-        error.textContent = message || '';
-      }
-
-      function validateUrl(value) {
-        try {
-          const parsed = new URL(value);
-          return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-        } catch (error) {
-          return false;
-        }
-      }
-
-      function buildLink() {
-        const namingStyle = document.getElementById('namingStyle').value;
-        const removePunctuation = document.getElementById('removePunctuation').value;
-        let valid = true;
-
-        requiredFields.forEach(function (item) {
-          const rawValue = document.getElementById(item.id).value;
-          if (!rawValue.trim()) {
-            setError(item.id, item.errorId, 'Enter a value for ' + item.label + '.');
-            valid = false;
-          } else {
-            setError(item.id, item.errorId, '');
-          }
-        });
-
-        const baseUrl = document.getElementById('baseUrl').value.trim();
-        if (baseUrl && !validateUrl(baseUrl)) {
-          setError('baseUrl', 'baseUrlError', 'Enter a valid URL starting with http:// or https://');
-          valid = false;
-        }
-
-        if (!valid) {
-          resultField.value = '';
-          copyButton.disabled = true;
-          summary.textContent = 'Please correct the highlighted fields and try again.';
-          return;
-        }
-
-        const parsedUrl = new URL(baseUrl);
-        const source = cleanValue(document.getElementById('source').value, namingStyle, removePunctuation);
-        const medium = cleanValue(document.getElementById('medium').value, namingStyle, removePunctuation);
-        const campaign = cleanValue(document.getElementById('campaign').value, namingStyle, removePunctuation);
-        const content = cleanValue(document.getElementById('content').value, namingStyle, removePunctuation);
-        const term = cleanValue(document.getElementById('term').value, namingStyle, removePunctuation);
-
-        parsedUrl.searchParams.set('utm_source', source);
-        parsedUrl.searchParams.set('utm_medium', medium);
-        parsedUrl.searchParams.set('utm_campaign', campaign);
-        if (content) parsedUrl.searchParams.set('utm_content', content); else parsedUrl.searchParams.delete('utm_content');
-        if (term) parsedUrl.searchParams.set('utm_term', term); else parsedUrl.searchParams.delete('utm_term');
-
-        resultField.value = parsedUrl.toString();
-        copyButton.disabled = false;
-
-        const summaryParts = ['Source: ' + source, 'Medium: ' + medium, 'Campaign: ' + campaign];
-        if (content) summaryParts.push('Content: ' + content);
-        if (term) summaryParts.push('Term: ' + term);
-        summary.textContent = summaryParts.join(' | ');
-      }
-
-      form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        buildLink();
-      });
-
-      copyButton.addEventListener('click', async function () {
-        if (!resultField.value) return;
-        try {
-          await navigator.clipboard.writeText(resultField.value);
-          summary.textContent = 'Tracked link copied to clipboard.';
-        } catch (error) {
-          resultField.select();
-          document.execCommand('copy');
-          summary.textContent = 'Tracked link copied to clipboard.';
-        }
-      });
-
-      clearButton.addEventListener('click', function () {
-        form.reset();
-        requiredFields.forEach(function (item) { setError(item.id, item.errorId, ''); });
-        resultField.value = '';
-        copyButton.disabled = true;
-        summary.textContent = 'Complete the form above to generate a tracked link.';
-      });
-    });
-  </script>
+  <script src="js/utm-builder.js"></script>
 </body>
 </html>

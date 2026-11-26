@@ -4,11 +4,18 @@
   <meta charset="UTF-8">
   <title>Marketing tools</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css">
   <link rel="stylesheet" href="css/gds-theme.css">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
 </head>
 <body data-app-key="home" data-app-title="Marketing tools" data-app-intro="A suite of digital tools to support Newbury College marketing functions.">
-  <div id="app-shell"></div>
+  <div id="app-shell"><p class="app-note">Loading Marketing Tools… If this message persists, refresh the page or contact Marketing.</p></div><noscript><p>This toolkit requires JavaScript to run.</p></noscript>
 
   <template id="app-page-content">
     <div class="app-note">
@@ -27,10 +34,10 @@
         <h3 class="app-drawer-item__title">Image Resizer</h3>
         <p class="app-drawer-item__description">Upload one image and generate the required marketing image sizes in one go.</p>
       </a>
-      <a class="app-drawer-item" href="video-stripper.html">
-        <i class="app-drawer-item__icon fas fa-film" aria-hidden="true"></i>
-        <h3 class="app-drawer-item__title">Video Stripper</h3>
-        <p class="app-drawer-item__description">Create a clean delivery copy of an MP4 or MOV without re-encoding the video or audio.</p>
+      <a class="app-drawer-item" href="media-stripper.html">
+        <i class="app-drawer-item__icon fas fa-photo-film" aria-hidden="true"></i>
+        <h3 class="app-drawer-item__title">Media Stripper</h3>
+        <p class="app-drawer-item__description">Remove supported metadata from video, audio and image files without re-encoding.</p>
       </a>
       <a class="app-drawer-item" href="utm-builder.html">
         <i class="app-drawer-item__icon fas fa-bullhorn" aria-hidden="true"></i>
@@ -47,6 +54,7 @@
         <h3 class="app-drawer-item__title">HR Vacancy Builder</h3>
         <p class="app-drawer-item__description">Create a 1080 × 1080 HR vacancy graphic with dynamic overlays and job details.</p>
       </a>
+      <a class="app-drawer-item" href="prompt-builder.html"><i class="app-drawer-item__icon fas fa-wand-magic-sparkles" aria-hidden="true"></i><h3 class="app-drawer-item__title">AI Prompt Builder</h3><p class="app-drawer-item__description">Create structured prompts for approved AI tools.</p></a>
       <a class="app-drawer-item" href="room-hire-generator.html">
         <i class="app-drawer-item__icon fas fa-person-shelter" aria-hidden="true"></i>
         <h3 class="app-drawer-item__title">Room Hire Email Generator</h3>
@@ -79,6 +87,7 @@
     </div>
   </template>
 
+  <script src="js/shared-utils.js"></script>
   <script src="js/gds-shell.js"></script>
 </body>
 </html>

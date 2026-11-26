@@ -6,11 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Room Hire Email Generator</title>
   <link rel="stylesheet" href="css/gds-theme.css" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' blob: data:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="favicon-16x16.png" sizes="16x16" type="image/png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
 </head>
 
 <body data-app-key="room-hire" data-app-title="Room Hire Email Generator" data-app-intro="Generate a booking link and ready-to-send email for room hire agreements.">
 
-  <div id="app-shell"></div>
+  <div id="app-shell"><p class="app-note">Loading Marketing Tools… If this message persists, refresh the page or contact Marketing.</p></div><noscript><p>This toolkit requires JavaScript to run.</p></noscript>
 
   <template id="app-page-content">
     <section class="app-form">
@@ -37,88 +45,29 @@
 
       <div class="app-button-row">
         <button type="button" id="generateBtn">Generate</button>
-        <button type="button" class="btn-secondary" id="copyLinkBtn">Copy link</button>
+        <button type="button" class="btn-secondary" id="copyLinkBtn" disabled>Copy link</button>
       </div>
     </section>
 
+    <p id="roomStatus" role="status" class="status-text"></p>
     <section class="app-card">
       <h2 class="app-section-title">Generated link</h2>
-      <textarea id="urlOutput" class="app-textarea" rows="4" readonly></textarea>
+      <textarea id="urlOutput" aria-label="Generated link" class="app-textarea" rows="4" readonly></textarea>
     </section>
 
     <section class="app-card">
       <h2 class="app-section-title">Email content</h2>
-      <textarea id="emailOutput" class="app-textarea" rows="6" readonly></textarea>
+      <textarea id="emailOutput" aria-label="Email content" class="app-textarea" rows="6" readonly></textarea>
       <div class="app-button-row">
-        <button type="button" id="copyEmail" class="btn-secondary">Copy email</button>
+        <button type="button" id="copyEmail" disabled class="btn-secondary">Copy email</button>
       </div>
     </section>
   </template>
 
+  <script src="js/shared-utils.js"></script>
   <script src="js/gds-shell.js"></script>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-      const baseUrl = 'https://newbury-college.ac.uk/index.php?option=com_rsform&formId=59';
-
-      // --- LIVE INPUT CLEANING ---
-      const rateField = document.getElementById('rate');
-
-      rateField.addEventListener('input', function () {
-        this.value = this.value
-          .replace(/[^0-9.]/g, '')         // remove anything not number or dot
-          .replace(/(\..*?)\..*/g, '$1'); // only allow one decimal
-      });
-
-      function cleanRate(value) {
-        return value
-          .replace(/[^0-9.]/g, '')
-          .replace(/(\..*?)\..*/g, '$1');
-      }
-
-      function copyText(id) {
-        const text = document.getElementById(id).value;
-        if (!text) return;
-        navigator.clipboard.writeText(text).catch(function () {
-          const field = document.getElementById(id);
-          field.select();
-          document.execCommand('copy');
-        });
-      }
-
-      document.getElementById('generateBtn').addEventListener('click', function () {
-
-        const bookingRefRaw = document.getElementById('bookingRef').value.trim();
-        let rateRaw = document.getElementById('rate').value.trim();
-        const rateUnitRaw = document.getElementById('rateUnit').value;
-
-        // --- FINAL CLEAN (safety net) ---
-        rateRaw = cleanRate(rateRaw);
-
-        if (!bookingRefRaw || !rateRaw) {
-          alert('Enter booking reference and valid rate');
-          return;
-        }
-
-        const bookingRef = encodeURIComponent(bookingRefRaw);
-        const rate = encodeURIComponent(rateRaw);
-        const rateUnit = encodeURIComponent(rateUnitRaw);
-
-        const url = `${baseUrl}&form[rate]=${rate}&form[rateUnit]=${rateUnit}&form[bookingRef]=${bookingRef}`;
-
-        document.getElementById('urlOutput').value = url;
-        document.getElementById('emailOutput').value =
-`Please use the following link to complete your room hire booking:
-
-${url}`;
-      });
-
-      document.getElementById('copyEmail').addEventListener('click', function () { copyText('emailOutput'); });
-      document.getElementById('copyLinkBtn').addEventListener('click', function () { copyText('urlOutput'); });
-
-    });
-  </script>
+  <script src="js/room-hire-generator.js"></script>
 
 </body>
 </html>
