@@ -19,7 +19,6 @@
 
     <section class="vs-panel" aria-labelledby="vs-heading">
       <h2 id="vs-heading">Choose a video</h2>
-
       <label id="vs-drop-zone" class="vs-drop-zone" for="vs-file-input" tabindex="0">
         <span class="vs-drop-zone__title">Drop an MP4, MOV or M4V here</span>
         <span class="vs-drop-zone__help">or select a file from this device</span>
@@ -27,11 +26,7 @@
       </label>
 
       <div id="vs-file-card" class="vs-file-card" hidden>
-        <div>
-          <span class="vs-label">Selected file</span>
-          <strong id="vs-file-name"></strong>
-          <span id="vs-file-details"></span>
-        </div>
+        <div><span class="vs-label">Selected file</span><strong id="vs-file-name"></strong><span id="vs-file-details"></span></div>
         <button id="vs-change-file" class="gds-button gds-button--secondary" type="button">Choose another</button>
       </div>
 
@@ -39,39 +34,23 @@
         <button id="vs-clean-button" class="gds-button" type="button" disabled>Strip metadata</button>
         <button id="vs-cancel-button" class="gds-button gds-button--secondary" type="button" hidden>Cancel</button>
       </div>
-
       <div id="vs-status" class="vs-status vs-status--info" aria-live="polite">Select one video to begin.</div>
-
       <div id="vs-progress-wrap" class="vs-progress" hidden>
-        <div class="vs-progress__track" role="progressbar" aria-label="Processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-          <div id="vs-progress-bar" class="vs-progress__bar"></div>
-        </div>
+        <div class="vs-progress__track" role="progressbar" aria-label="Processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="vs-progress-bar" class="vs-progress__bar"></div></div>
         <span id="vs-progress-label">Preparing…</span>
       </div>
-
       <div id="vs-result" class="vs-result" hidden>
         <h3>Clean copy ready</h3>
-        <ul>
-          <li>Video and audio were copied without re-encoding.</li>
-          <li>Normal inherited metadata and chapters were excluded.</li>
-          <li>The MP4/MOV container was rebuilt.</li>
-        </ul>
+        <ul><li>Video and audio copied without re-encoding.</li><li>Normal inherited metadata and chapters excluded.</li><li>The MP4/MOV container rebuilt.</li></ul>
         <button id="vs-download-button" class="gds-button" type="button">Download clean video</button>
         <button id="vs-reset-button" class="gds-button gds-button--secondary" type="button">Clean another</button>
       </div>
     </section>
-
-    <details class="vs-details">
-      <summary>Technical information and limitations</summary>
-      <p>Video Stripper uses FFmpeg compiled to WebAssembly. The equivalent operation is a stream-copy remux using <code>-map_metadata -1</code>, <code>-map_chapters -1</code> and <code>-c copy</code>.</p>
-      <p>No visual or audio quality is lost because the compressed media streams are not re-encoded. Browser processing temporarily needs additional memory, so process one file at a time. Very large 4K files may fail on devices with limited available memory.</p>
-      <p>Removing metadata does not prove that media was not generated or edited with AI. Use this tool only to correct inappropriate or invalid metadata, not to misrepresent genuinely AI-generated material.</p>
-      <p>For Adobe verification, import the downloaded file into Premiere Pro, right-click it in the Project panel and select <strong>Scan for Content Credentials</strong>.</p>
-    </details>
+    <details class="vs-details"><summary>Technical information and limitations</summary><p>Video Stripper uses FFmpeg compiled to WebAssembly and performs a stream-copy remux using <code>-map_metadata -1</code>, <code>-map_chapters -1</code> and <code>-c copy</code>.</p><p>Very large 4K files may exceed browser memory. If that happens, use the proven desktop PowerShell/FFmpeg method.</p><p>For Adobe verification, import the downloaded file into Premiere Pro, right-click it in the Project panel and select <strong>Scan for Content Credentials</strong>.</p></details>
   </template>
 
   <script src="js/gds-shell.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/umd/ffmpeg.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/umd/index.js"></script>
   <script src="js/video-stripper.js"></script>
 </body>
