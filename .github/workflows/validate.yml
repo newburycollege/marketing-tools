@@ -1,0 +1,29 @@
+name: Validate Marketing Tools
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - name: Save generated dependency lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-lockfile
+          path: package-lock.json
+      - run: npm run test:metadata
+      - run: npm run build:pages
+      - run: npm run validate
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=high

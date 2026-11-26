@@ -28,7 +28,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Build Marketing Tools
-        run: npm run build:pages
+        run: npm run test:metadata && npm run build:pages && npm run validate
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy

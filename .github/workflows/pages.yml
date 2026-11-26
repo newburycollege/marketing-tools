@@ -32,7 +32,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Build static site with local FFmpeg assets
-        run: npm run build:pages
+        run: npm run test:metadata && npm run build:pages && npm run validate
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
