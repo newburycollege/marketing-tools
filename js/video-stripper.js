@@ -38,16 +38,15 @@
 
     async function getEngine(){
       if(ffmpeg) return ffmpeg;
-      if(!window.FFmpegWASM || !window.FFmpegUtil) throw new Error('Local FFmpeg browser libraries did not load.');
+      if(!window.FFmpegWASM) throw new Error('Local FFmpeg API did not load.');
       const processor = new window.FFmpegWASM.FFmpeg();
-      const toBlobURL = window.FFmpegUtil.toBlobURL;
       const coreBase = new URL('vendor/ffmpeg/core/', document.baseURI).href;
       processor.on('progress', event => { if(Number.isFinite(event.progress)) setProgress(event.progress*100,'Processing… '+Math.round(event.progress*100)+'%'); });
       setStatus('Loading the local video-processing engine (about 31 MB on first use)…','working');
       progressWrap.hidden=false; setProgress(2,'Loading processing engine…');
       await processor.load({
-        coreURL: await toBlobURL(coreBase+'ffmpeg-core.js','text/javascript'),
-        wasmURL: await toBlobURL(coreBase+'ffmpeg-core.wasm','application/wasm')
+      coreURL: coreBase + 'ffmpeg-core.js',
+      wasmURL: coreBase + 'ffmpeg-core.wasm'
       });
       ffmpeg=processor; return processor;
     }
